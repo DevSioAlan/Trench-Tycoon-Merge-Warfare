@@ -1,0 +1,191 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #1a1a2e;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  /* Disable pull-to-refresh and selection on mobile */
+  overscroll-behavior-y: none;
+  user-select: none;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.game-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+.gold-counter {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.summon-button {
+  background: linear-gradient(135deg, #4CAF50, #2E7D32);
+  color: white;
+  border: none;
+  padding: 15px 30px;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  transition: transform 0.1s, filter 0.1s;
+  width: 100%;
+}
+
+.summon-button:active {
+  transform: scale(0.95);
+}
+
+.summon-button:disabled {
+  background: #555;
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 10px;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-color: #16213e;
+  padding: 10px;
+  border-radius: 15px;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.grid-cell {
+  background-color: #0f3460;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  /* Prevent default touch actions like panning for better touch response */
+  touch-action: manipulation;
+}
+
+.unit {
+  width: 90%;
+  height: 90%;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  /* Basic transition for moving */
+  transition: all 0.2s ease-in-out;
+}
+
+.unit-name {
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.unit-level {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Colors for different unit levels */
+.unit-lvl-1 {
+  background: linear-gradient(135deg, #a8c0ff, #3f2b96);
+}
+.unit-lvl-2 {
+  background: linear-gradient(135deg, #f12711, #f5af19);
+}
+.unit-lvl-3 {
+  background: linear-gradient(135deg, #11998e, #38ef7d);
+}
+.unit-lvl-4 {
+  background: linear-gradient(135deg, #8E2DE2, #4A00E0);
+}
+.unit-lvl-5 {
+  background: linear-gradient(135deg, #FF416C, #FF4B2B);
+}
+
+/* --- ANIMATIONS --- */
+
+/* Pop-in: Quand une unité est invoquée (effet de rebond/scale) */
+.pop-in .unit {
+  animation: pop-in-anim 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes pop-in-anim {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Selected-pulse: Lueur autour de l'unité quand on tape dessus */
+.selected-pulse {
+  animation: selected-pulse-anim 1.5s infinite;
+  border: 2px solid #00d2ff;
+  box-sizing: border-box;
+}
+
+@keyframes selected-pulse-anim {
+  0% { box-shadow: 0 0 5px #00d2ff, inset 0 0 5px #00d2ff; }
+  50% { box-shadow: 0 0 15px #00d2ff, inset 0 0 15px #00d2ff; }
+  100% { box-shadow: 0 0 5px #00d2ff, inset 0 0 5px #00d2ff; }
+}
+
+/* Merge-shockwave: Quand deux unités fusionnent (flash blanc, scale, tremblement) */
+.merge-shockwave .unit {
+  animation: merge-shockwave-anim 0.5s ease-out forwards;
+}
+
+@keyframes merge-shockwave-anim {
+  0% {
+    transform: scale(0.8);
+    filter: brightness(1);
+  }
+  20% {
+    transform: scale(1.3) translateX(-2px) rotate(-3deg);
+    filter: brightness(2) drop-shadow(0 0 20px white);
+  }
+  40% {
+    transform: scale(1.2) translateX(2px) rotate(3deg);
+    filter: brightness(1.8) drop-shadow(0 0 15px white);
+  }
+  60% {
+    transform: scale(1.1) translateX(-1px) rotate(-1deg);
+    filter: brightness(1.5) drop-shadow(0 0 10px white);
+  }
+  80% {
+    transform: scale(1.05) translateX(1px) rotate(1deg);
+    filter: brightness(1.2);
+  }
+  100% {
+    transform: scale(1) translateX(0) rotate(0);
+    filter: brightness(1);
+  }
+}
