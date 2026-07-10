@@ -32,7 +32,10 @@ export default function GameBoard() {
   // Combat States
   const [enemyMaxHp, setEnemyMaxHp] = useState(1000);
   const [enemyHp, setEnemyHp] = useState(1000);
+  const [playerMaxHp, setPlayerMaxHp] = useState(500);
+  const [playerHp, setPlayerHp] = useState(500);
   const [activeTroops, setActiveTroops] = useState([]);
+  const [activeEnemy, setActiveEnemy] = useState(null);
   const [baseShake, setBaseShake] = useState(false);
 
   // Economy loop
@@ -42,6 +45,34 @@ export default function GameBoard() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Ref to hold the latest activeEnemy state safely for asynchronous timeouts
+  const activeEnemyRef = React.useRef(activeEnemy);
+  useEffect(() => {
+    activeEnemyRef.current = activeEnemy;
+  }, [activeEnemy]);
+
+  // Enemy Spawner
+  useEffect(() => {
+    const spawner = setInterval(() => {
+      const enemyId = Date.now();
+      const spawnHp = Math.floor(enemyMaxHp * 0.05) || 50;
+      const enemyData = { id: enemyId, hp: spawnHp, maxHp: spawnHp, damage: spawnHp };
+
+      setActiveEnemy(enemyData);
+
+      setTimeout(() => {
+        // Evaluate the condition using the ref instead of the updater function
+        const currentEnemy = activeEnemyRef.current;
+        if (currentEnemy && currentEnemy.id === enemyId) {
+          setPlayerHp(p => p - currentEnemy.damage);
+          setActiveEnemy(null);
+        }
+      }, 2000);
+    }, 4000);
+
+    return () => clearInterval(spawner);
+  }, [enemyMaxHp]);
 
   // Assault Action
   const handleAssault = () => {
@@ -58,9 +89,26 @@ export default function GameBoard() {
     if (activeTroops.length > 0) {
       const timer = setTimeout(() => {
         const totalDamage = activeTroops.reduce((sum, troop) => sum + (DAMAGE_MAP[troop.level] || 0), 0);
-        setEnemyHp(prev => Math.max(0, prev - totalDamage));
+        const currentEnemy = activeEnemyRef.current;
+
+        if (currentEnemy) {
+          if (totalDamage >= currentEnemy.hp) {
+            // Enemy destroyed, surplus to base
+            const surplus = totalDamage - currentEnemy.hp;
+            setEnemyHp(prev => Math.max(0, prev - surplus));
+            setActiveEnemy(null);
+          } else {
+            // Enemy survives, no surplus
+            setActiveEnemy(prev => ({ ...prev, hp: prev.hp - totalDamage }));
+          }
+        } else {
+          // No enemy, base takes full damage
+          setEnemyHp(prev => Math.max(0, prev - totalDamage));
+        }
+
         setActiveTroops([]);
       }, 1000); // 1s animation time
+
       return () => clearTimeout(timer);
     }
   }, [activeTroops]);
@@ -70,6 +118,7 @@ export default function GameBoard() {
     if (enemyHp <= 0 && enemyMaxHp > 0) {
       setGold(prev => prev + 500);
       setBaseShake(true);
+      setActiveEnemy(null);
 
       // We don't put the timeout in a cleanup that gets canceled by baseShake
       // by pulling the state logic into a localized timeout.
@@ -82,7 +131,23 @@ export default function GameBoard() {
         setBaseShake(false);
       }, 500); // Shake duration
     }
-  }, [enemyHp]); // Only depend on enemyHp to trigger ONCE when it hits 0
+  }, [enemyHp]);
+
+  // Game Over Loop
+  useEffect(() => {
+    if (playerHp <= 0) {
+      alert('Base Détruite ! Game Over.');
+      setGold(0);
+      setGrid(Array(GRID_SIZE).fill(null));
+      setSelectedSlot(null);
+      setPlayerHp(500);
+      setPlayerMaxHp(500);
+      setEnemyMaxHp(1000);
+      setEnemyHp(1000);
+      setActiveEnemy(null);
+      setActiveTroops([]);
+    }
+  }, [playerHp]);
 
   const triggerAnimation = (index, animationType) => {
     setAnimatingCells(prev => ({ ...prev, [index]: animationType }));
@@ -171,18 +236,43 @@ export default function GameBoard() {
       {/* Moitié Haute : Battlefield */}
       <div className="battlefield-section">
         <div className="battlefield">
-          {/* Zone d'apparition des troupes (Gauche) */}
-          <div className="troop-spawn-zone">
-            {activeTroops.map((troop, idx) => (
+          {/* Base du Joueur (Gauche) */}
+          <div className="player-base">
+            <div className="base-sprite">🛡️</div>
+            <div className="hp-bar-container">
               <div
-                key={`${troop.id}-${idx}`}
-                className={`unit unit-lvl-${troop.level} active-troop troop-charge`}
-                style={{ top: `${(idx % 3) * 30}px`, left: `${Math.floor(idx / 3) * -10}px` }}
-              >
-                <span className="unit-level">Lvl {troop.level}</span>
-              </div>
-            ))}
+                className="hp-bar player-hp-bar"
+                style={{ width: `${Math.max(0, (playerHp / playerMaxHp) * 100)}%` }}
+              ></div>
+            </div>
+            <div className="hp-text">{playerHp} / {playerMaxHp}</div>
+
+            {/* Zone d'apparition des troupes */}
+            <div className="troop-spawn-zone">
+              {activeTroops.map((troop, idx) => (
+                <div
+                  key={`${troop.id}-${idx}`}
+                  className={`unit unit-lvl-${troop.level} active-troop troop-charge`}
+                  style={{ top: `${(idx % 3) * 30}px`, left: `${Math.floor(idx / 3) * -10}px` }}
+                >
+                  <span className="unit-level">Lvl {troop.level}</span>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Ennemi Actif (Centre/Mouvement) */}
+          {activeEnemy && (
+            <div className="active-enemy enemy-charge">
+              <div className="enemy-sprite">👿</div>
+              <div className="hp-bar-container mini-hp-bar">
+                <div
+                  className="hp-bar"
+                  style={{ width: `${Math.max(0, (activeEnemy.hp / activeEnemy.maxHp) * 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
 
           {/* Base Ennemie (Droite) */}
           <div className={`enemy-base ${baseShake ? 'base-shake' : ''}`}>

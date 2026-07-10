@@ -48,8 +48,19 @@ body {
   box-sizing: border-box;
 }
 
-.troop-spawn-zone {
+.player-base {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 5;
   position: relative;
+}
+
+.troop-spawn-zone {
+  position: absolute;
+  top: 50%;
+  left: 60px;
+  transform: translateY(-50%);
   width: 60px;
   height: 100%;
   display: flex;
@@ -69,6 +80,28 @@ body {
   flex-direction: column;
   align-items: center;
   z-index: 5;
+  position: relative;
+}
+
+.active-enemy {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 8;
+}
+
+.enemy-sprite {
+  font-size: 40px;
+  filter: drop-shadow(0 0 10px rgba(231, 76, 60, 0.8));
+}
+
+.mini-hp-bar {
+  width: 50px;
+  height: 8px;
+  margin-top: 5px;
 }
 
 .base-sprite {
@@ -90,6 +123,10 @@ body {
   height: 100%;
   background-color: #e74c3c;
   transition: width 0.3s ease-out;
+}
+
+.hp-bar.player-hp-bar {
+  background-color: #2ecc71;
 }
 
 .hp-text {
@@ -302,6 +339,16 @@ body {
   0% { transform: translateX(0) scale(1); opacity: 1; }
   80% { transform: translateX(180px) scale(1.2); opacity: 1; }
   100% { transform: translateX(200px) scale(0); opacity: 0; }
+}
+
+/* Enemy Charge */
+.enemy-charge {
+  animation: enemy-charge-anim 2s linear forwards;
+}
+
+@keyframes enemy-charge-anim {
+  0% { left: calc(100% - 100px); }
+  100% { left: 80px; opacity: 0; }
 }
 
 /* Base Destruction Shake */
