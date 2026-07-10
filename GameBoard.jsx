@@ -10,7 +10,7 @@ const UNIT_TYPES = {
   5: 'Mécha'
 };
 
-const SUMMON_COST = 10;
+const SUMMON_COST = 50;
 const GRID_SIZE = 12;
 
 export default function GameBoard() {
@@ -24,7 +24,7 @@ export default function GameBoard() {
   // Economy loop
   useEffect(() => {
     const timer = setInterval(() => {
-      setGold(prev => prev + 1);
+      setGold(prev => prev + 5);
     }, 1000);
     return () => clearInterval(timer);
   }, []);
@@ -45,10 +45,25 @@ export default function GameBoard() {
       const firstEmptyIndex = grid.findIndex(cell => cell === null);
       if (firstEmptyIndex !== -1) {
         setGold(prev => prev - SUMMON_COST);
+
+        // Gacha probabilities
+        const rand = Math.random();
+        let spawnLevel = 1;
+        let animationType = 'pop-in';
+
+        if (rand < 0.7) {
+          spawnLevel = 1;
+        } else if (rand < 0.95) {
+          spawnLevel = 2;
+        } else {
+          spawnLevel = 3;
+          animationType = 'pop-in-jackpot';
+        }
+
         const newGrid = [...grid];
-        newGrid[firstEmptyIndex] = { level: 1, id: Date.now() };
+        newGrid[firstEmptyIndex] = { level: spawnLevel, id: Date.now() };
         setGrid(newGrid);
-        triggerAnimation(firstEmptyIndex, 'pop-in');
+        triggerAnimation(firstEmptyIndex, animationType);
       }
     }
   };
@@ -103,11 +118,12 @@ export default function GameBoard() {
           💰 Or : {gold}
         </div>
         <button
-          className="summon-button"
+          className="summon-button gacha-btn"
           onClick={handleSummon}
           disabled={gold < SUMMON_COST || grid.every(cell => cell === null === false)}
         >
-          Invoquer (Coût : {SUMMON_COST} Or)
+          <span className="summon-title">✨ INVOQUER ✨</span>
+          <span className="summon-cost">Coût : {SUMMON_COST} Or</span>
         </button>
       </header>
 
