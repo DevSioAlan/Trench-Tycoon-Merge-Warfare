@@ -10,19 +10,20 @@ const UNIT_TYPES = {
   5: 'Mécha'
 };
 
-const SUMMON_COST = 50;
 const GRID_SIZE = 12;
 
 const DAMAGE_MAP = {
   1: 10,
-  2: 30,
-  3: 100,
-  4: 250,
-  5: 600
+  2: 35,
+  3: 120,
+  4: 450,
+  5: 1500
 };
 
 export default function GameBoard() {
   const [gold, setGold] = useState(0);
+  const [summonCost, setSummonCost] = useState(50);
+  const [goldPerSecond, setGoldPerSecond] = useState(5);
   const [grid, setGrid] = useState(Array(GRID_SIZE).fill(null));
   const [selectedSlot, setSelectedSlot] = useState(null);
 
@@ -34,14 +35,15 @@ export default function GameBoard() {
   const [enemyHp, setEnemyHp] = useState(1000);
   const [activeTroops, setActiveTroops] = useState([]);
   const [baseShake, setBaseShake] = useState(false);
+  const [floatingTexts, setFloatingTexts] = useState([]);
 
   // Economy loop
   useEffect(() => {
     const timer = setInterval(() => {
-      setGold(prev => prev + 5);
+      setGold(prev => prev + goldPerSecond);
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [goldPerSecond]);
 
   // Assault Action
   const handleAssault = () => {
@@ -59,6 +61,22 @@ export default function GameBoard() {
       const timer = setTimeout(() => {
         const totalDamage = activeTroops.reduce((sum, troop) => sum + (DAMAGE_MAP[troop.level] || 0), 0);
         setEnemyHp(prev => Math.max(0, prev - totalDamage));
+
+        // Create floating damage text for each troop to make it satisfying
+        const newFloatingTexts = activeTroops.map((troop) => ({
+          id: Date.now() + Math.random(),
+          damage: DAMAGE_MAP[troop.level] || 0,
+          offsetX: Math.floor(Math.random() * 40 - 20) + 'px',
+          offsetY: Math.floor(Math.random() * 40 - 20) + 'px'
+        }));
+
+        setFloatingTexts(prev => [...prev, ...newFloatingTexts]);
+
+        // Remove floating texts after animation (1s)
+        setTimeout(() => {
+          setFloatingTexts(prev => prev.filter(ft => !newFloatingTexts.includes(ft)));
+        }, 1000);
+
         setActiveTroops([]);
       }, 1000); // 1s animation time
       return () => clearTimeout(timer);
@@ -71,11 +89,14 @@ export default function GameBoard() {
       setGold(prev => prev + 500);
       setBaseShake(true);
 
+      // Scale economy with progress
+      setGoldPerSecond(prev => Math.floor(prev * 1.5));
+
       // We don't put the timeout in a cleanup that gets canceled by baseShake
       // by pulling the state logic into a localized timeout.
       setTimeout(() => {
         setEnemyMaxHp(prevMax => {
-          const newMax = Math.floor(prevMax * 1.5);
+          const newMax = Math.floor(prevMax * 1.8);
           setEnemyHp(newMax);
           return newMax;
         });
@@ -96,10 +117,11 @@ export default function GameBoard() {
   };
 
   const handleSummon = () => {
-    if (gold >= SUMMON_COST) {
+    if (gold >= summonCost) {
       const firstEmptyIndex = grid.findIndex(cell => cell === null);
       if (firstEmptyIndex !== -1) {
-        setGold(prev => prev - SUMMON_COST);
+        setGold(prev => prev - summonCost);
+        setSummonCost(prev => Math.floor(prev * 1.2));
 
         // Gacha probabilities
         const rand = Math.random();
@@ -194,6 +216,17 @@ export default function GameBoard() {
               ></div>
             </div>
             <div className="hp-text">{enemyHp} / {enemyMaxHp}</div>
+
+            {/* Floating Damage Texts */}
+            {floatingTexts.map(text => (
+              <div
+                key={text.id}
+                className="floating-damage"
+                style={{ left: `calc(50% + ${text.offsetX})`, top: `calc(50% + ${text.offsetY})` }}
+              >
+                -{text.damage}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -216,10 +249,10 @@ export default function GameBoard() {
           <button
             className="summon-button gacha-btn"
             onClick={handleSummon}
-            disabled={gold < SUMMON_COST || grid.every(cell => cell === null === false)}
+            disabled={gold < summonCost || grid.every(cell => cell !== null)}
           >
             <span className="summon-title">✨ INVOQUER ✨</span>
-            <span className="summon-cost">Coût : {SUMMON_COST} Or</span>
+            <span className="summon-cost">Coût : {summonCost} Or</span>
           </button>
         </header>
 

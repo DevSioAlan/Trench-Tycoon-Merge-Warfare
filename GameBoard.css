@@ -1,3 +1,11 @@
+:root {
+  --color-common: #a0aec0;
+  --color-rare: #63b3ed;
+  --color-epic: #9f7aea;
+  --color-legendary: #ecc94b;
+  --color-mythic: #f56565;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -84,12 +92,14 @@ body {
   border-radius: 10px;
   overflow: hidden;
   margin-top: 10px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 2px 5px rgba(0,0,0,0.4);
 }
 
 .hp-bar {
   height: 100%;
-  background-color: #e74c3c;
+  background: linear-gradient(90deg, #e74c3c, #c0392b);
   transition: width 0.3s ease-out;
+  box-shadow: inset 0 -2px 4px rgba(0,0,0,0.3);
 }
 
 .hp-text {
@@ -264,31 +274,56 @@ body {
 /* Colors for different unit levels (Rarities) */
 /* Level 1: Common / Gris */
 .unit-lvl-1 {
-  background: linear-gradient(135deg, #7f8c8d, #95a5a6);
-  border: 2px solid #bdc3c7;
+  background: linear-gradient(135deg, var(--color-common), #718096);
+  border: 2px solid #cbd5e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 /* Level 2: Rare / Bleu */
 .unit-lvl-2 {
-  background: linear-gradient(135deg, #2980b9, #3498db);
-  border: 2px solid #5dade2;
+  background: linear-gradient(135deg, var(--color-rare), #3182ce);
+  border: 2px solid #90cdf4;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 0 5px rgba(255,255,255,0.2);
 }
 /* Level 3: Epic / Violet */
 .unit-lvl-3 {
-  background: linear-gradient(135deg, #8e44ad, #9b59b6);
-  border: 2px solid #c39bd3;
-  box-shadow: 0 0 10px rgba(155, 89, 182, 0.5);
+  background: linear-gradient(135deg, var(--color-epic), #805ad5);
+  border: 2px solid #d6bcfa;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(159, 122, 234, 0.5), inset 0 0 8px rgba(255,255,255,0.3);
 }
 /* Level 4: Legendary / Or */
 .unit-lvl-4 {
-  background: linear-gradient(135deg, #d35400, #f39c12);
-  border: 2px solid #f1c40f;
-  box-shadow: 0 0 15px rgba(241, 196, 15, 0.7);
+  background: linear-gradient(135deg, var(--color-legendary), #d69e2e);
+  border: 2px solid #fefcbf;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(236, 201, 75, 0.7), inset 0 0 10px rgba(255,255,255,0.4);
 }
 /* Level 5: Mythic / Rouge */
 .unit-lvl-5 {
-  background: linear-gradient(135deg, #c0392b, #e74c3c);
-  border: 2px solid #ec7063;
-  box-shadow: 0 0 20px rgba(231, 76, 60, 0.9);
+  background: linear-gradient(135deg, var(--color-mythic), #e53e3e);
+  border: 2px solid #fed7d7;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(245, 101, 101, 0.9), inset 0 0 15px rgba(255,255,255,0.5);
+}
+
+/* Floating Damage */
+.floating-damage {
+  position: absolute;
+  color: #ff4757;
+  font-size: 24px;
+  font-weight: 900;
+  text-shadow: 2px 2px 0 #2f3542, -1px -1px 0 #2f3542, 1px -1px 0 #2f3542, -1px 1px 0 #2f3542, 0px 4px 10px rgba(255, 71, 87, 0.8);
+  pointer-events: none;
+  z-index: 50;
+  animation: floating-damage-anim 1s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes floating-damage-anim {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  20% { transform: translate(-50%, -100%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -250%) scale(1); opacity: 0; }
 }
 
 /* --- ANIMATIONS --- */
