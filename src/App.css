@@ -18,6 +18,124 @@ body { margin: 0; background-color: var(--bg-dark); font-family: system-ui, sans
 .game-container { display: flex; flex-direction: column; width: 100%; height: 100%; background-color: var(--bg-dark); position: relative; overflow: hidden; }
 
 .start-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: #0f172a; text-align: center; padding: 20px; }
+
+/* NEW START SCREEN STYLES */
+.new-start-screen {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+}
+
+.tactical-grid-bg {
+  position: absolute;
+  inset: -100%;
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+  animation: gridMove 20s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes gridMove {
+  0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); }
+  100% { transform: perspective(500px) rotateX(60deg) translateY(400px) translateZ(-200px); }
+}
+
+.title-container {
+  z-index: 10;
+  margin-bottom: 50px;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+}
+
+.glitch-title {
+  font-size: 48px;
+  font-weight: 900;
+  margin: 0;
+  color: #f8fafc;
+  position: relative;
+  text-shadow: 0 0 10px rgba(56,189,248,0.5), 0 0 20px rgba(56,189,248,0.3);
+  animation: occasionalGlitch 5s infinite;
+}
+
+.glitch-title::before, .glitch-title::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
+}
+
+.glitch-title::before {
+  left: 2px;
+  text-shadow: -2px 0 #ef4444;
+  clip: rect(24px, 550px, 90px, 0);
+  animation: glitch-anim 3s infinite linear alternate-reverse;
+  display: none;
+}
+
+.glitch-title::after {
+  left: -2px;
+  text-shadow: -2px 0 #3b82f6;
+  clip: rect(85px, 550px, 140px, 0);
+  animation: glitch-anim 2.5s infinite linear alternate-reverse;
+  display: none;
+}
+
+@keyframes occasionalGlitch {
+  0%, 95%, 100% { transform: skew(0deg); }
+  96% { transform: skew(10deg); filter: hue-rotate(90deg); }
+  98% { transform: skew(-10deg); filter: blur(2px); }
+}
+
+.subtitle {
+  color: #94a3b8;
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 5px;
+}
+
+.pulse-action-btn {
+  z-index: 10;
+  width: 80%;
+  padding: 20px;
+  font-size: 20px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 6px 0 #064e3b, 0 10px 20px rgba(16,185,129,0.4);
+  animation: pulseBtn 2s infinite;
+}
+
+.pulse-action-btn:hover {
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+@keyframes pulseBtn {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.audio-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 24px;
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 20;
+  backdrop-filter: blur(5px);
+  transition: background 0.2s;
+}
+
+.audio-toggle:hover {
+  background: rgba(255,255,255,0.2);
+}
 .loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 20px; font-weight: bold; color: var(--accent); }
 
 /* Météo */

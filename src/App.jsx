@@ -9,6 +9,7 @@ import { GRID_SIZE, DAMAGE_MAP, HP_MAP, UNIT_TYPES, formatNum, BETA_FEATURES, SA
 import { HUD } from './components/HUD';
 import { Battlefield } from './components/Battlefield';
 import { Grid } from './components/Grid';
+import { StartScreen } from './components/StartScreen';
 import { Cinematic, ProfileModal, AFKModal } from './components/Modals';
 
 function GameContent() {
@@ -240,15 +241,7 @@ function GameContent() {
   };
 
   if (!gameStarted) {
-    return (
-      <div className="start-screen">
-        <h1 className="rainbow-text" style={{fontSize:'40px'}}>TRENCH TYCOON</h1>
-        <p>Tactical Warfare Edition</p>
-        <button className="confirm-btn" style={{width:'80%', padding:'20px', fontSize:'20px'}} onClick={() => setGameStarted(true)}>
-          DÉPLOYER LES TROUPES
-        </button>
-      </div>
-    );
+    return <StartScreen setGameStarted={setGameStarted} settings={settings} setSettings={setSettings} />;
   }
 
   if (!isLoaded) return <div className="loading-screen">Chargement...</div>;

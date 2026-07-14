@@ -1,6 +1,7 @@
+import { memo } from 'react';
 import { UNIT_TYPES } from '../constants';
 
-export const Grid = ({ grid, selectedSlot, animatingCells, handleCellClick }) => {
+export const Grid = memo(({ grid, selectedSlot, animatingCells, handleCellClick }) => {
   return (
     <div className="grid-container">
       <div className="grid-background-pattern"></div>
@@ -23,4 +24,4 @@ export const Grid = ({ grid, selectedSlot, animatingCells, handleCellClick }) =>
       })}
     </div>
   );
-};
+});

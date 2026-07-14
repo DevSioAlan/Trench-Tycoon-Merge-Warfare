@@ -1,14 +1,15 @@
+import { memo } from 'react';
 import { UNIT_TYPES, formatNum, BETA_FEATURES } from '../constants';
 
-export const Battlefield = ({
+export const Battlefield = memo(({
   combatState, wave, isRaidBossWave, waveEvent, weather, rageTimer,
   ultiGauge, field, floatingTexts, triggerUltimate, raidTimer
 }) => {
   return (
     <>
       <div className="combat-hud">
-        <div className="combo-meter">COMBO x{combatState.combo}</div>
-        <div className="energy-meter">⚡ {Math.floor(combatState.energy)}/100</div>
+        <div className="combo-meter">COMBO x{combatState?.combo ?? 0}</div>
+        <div className="energy-meter">⚡ {Math.floor(combatState?.energy ?? 0)}/100</div>
         <div className={`wave-badge ${isRaidBossWave ? 'boss-badge' : ''}`}>{isRaidBossWave ? '⚠️ BOSS ⚠️' : `VAGUE ${wave}`}</div>
       </div>
 
@@ -28,29 +29,29 @@ export const Battlefield = ({
         </div>
 
         <div className="battlefield-1d">
-          {field.troops.map(t => (
+          {field?.troops?.map(t => (
             <div key={t.id} className="field-entity entity-troop" style={{ left: `${t.x}%` }}>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(t.hp/t.maxHp)*100}%`}}></div></div>
               <img src={UNIT_TYPES[t.level].img} alt="T" />
             </div>
           ))}
-          {field.enemies.map(e => (
+          {field?.enemies?.map(e => (
             <div key={e.id} className={`field-entity entity-enemy ${e.isBoss ? 'is-boss' : ''}`} style={{ left: `${e.x}%` }}>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(e.hp/e.maxHp)*100}%`, background: '#ef4444'}}></div></div>
               <img src={UNIT_TYPES[e.level].img} alt="E" />
             </div>
           ))}
-          {floatingTexts.map(ft => (
+          {floatingTexts?.map(ft => (
             <div key={ft.id} className={`floating-damage damage-${ft.type}`} style={{ left: `${ft.x}%`, top: `${ft.y}px`, transform: `scale(${ft.sizeMult}) translate(-50%, -50%)` }}>{ft.text}</div>
           ))}
         </div>
 
         <div className="bases-hud">
-          <div className="base-hp player">Base: {formatNum(combatState.playerHp)}</div>
+          <div className="base-hp player">Base: {formatNum(combatState?.playerHp ?? 0)}</div>
           {isRaidBossWave && <div className="raid-timer">00:{raidTimer < 10 ? `0${raidTimer}` : raidTimer}</div>}
-          <div className="base-hp enemy">Objectif: {formatNum(combatState.enemyHp)}</div>
+          <div className="base-hp enemy">Objectif: {formatNum(combatState?.enemyHp ?? 0)}</div>
         </div>
       </div>
     </>
   );
-};
+});

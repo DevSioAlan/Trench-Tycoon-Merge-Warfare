@@ -3,9 +3,11 @@ export class ParticleEngine {
     this.canvas = canvas;
     this.ctx = canvas?.getContext('2d');
     this.particles = [];
+    this.animationId = null;
+    this.handleResize = this.resize.bind(this);
     if (this.canvas) {
       this.resize();
-      window.addEventListener('resize', () => this.resize());
+      window.addEventListener('resize', this.handleResize);
     }
   }
 
@@ -47,6 +49,11 @@ export class ParticleEngine {
       this.ctx.fill();
     }
     this.ctx.globalAlpha = 1;
-    requestAnimationFrame(() => this.update());
+    this.animationId = requestAnimationFrame(() => this.update());
+  }
+
+  destroy() {
+    if (this.animationId) cancelAnimationFrame(this.animationId);
+    window.removeEventListener('resize', this.handleResize);
   }
 }
