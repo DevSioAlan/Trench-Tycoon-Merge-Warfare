@@ -14,6 +14,7 @@ import { Cinematic, ProfileModal, AFKModal } from './components/Modals';
 import { deployUnitAction } from './engine/combatEngine';
 import { SummonView } from './components/SummonView';
 import { MultiplayerView } from './components/MultiplayerView';
+import { DeckView } from './components/DeckView';
 import { useGacha } from './hooks/useGacha';
 import { CombatView } from './components/CombatView';
 import { InventoryView } from './components/InventoryView';
@@ -169,15 +170,16 @@ function GameContent() {
     setSelectedSlot(index);
   };
 
-  const handleDeployIndividual = () => {
-    if (selectedSlot === null || !grid[selectedSlot]) return;
+  const handleDeployIndividual = (indexToDeploy) => {
+    const targetIndex = indexToDeploy !== undefined ? indexToDeploy : selectedSlot;
+    if (targetIndex === null || !grid[targetIndex]) return;
 
     // Check cooldown
-    if (cooldowns[selectedSlot] && now < cooldowns[selectedSlot]) {
+    if (cooldowns[targetIndex] && now < cooldowns[targetIndex]) {
       return addFloatingText("En recharge", 50, 80, 'damage-red');
     }
 
-    const unit = grid[selectedSlot];
+    const unit = grid[targetIndex];
     const energyCost = unit.level * 10;
 
     if (combatState.energy < energyCost) {
@@ -191,7 +193,7 @@ function GameContent() {
       // Set cooldown (e.g. 2 seconds + 0.5s per level)
       setCooldowns(prev => ({
         ...prev,
-        [selectedSlot]: Date.now() + 2000 + (unit.level * 500)
+        [targetIndex]: Date.now() + 2000 + (unit.level * 500)
       }));
     }
   };
@@ -414,7 +416,7 @@ function GameContent() {
         )}
 
         {currentTab === 'social' && (
-          <MultiplayerView combatState={combatState} setCombatState={setCombatState} maxPlayerHp={maxPlayerHp} />
+          <MultiplayerView res={res} setRes={setRes} />
         )}
 
         {currentTab === 'settings' && (
