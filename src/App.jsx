@@ -14,6 +14,7 @@ import { Cinematic, ProfileModal, AFKModal } from './components/Modals';
 import { deployUnitAction } from './engine/combatEngine';
 import { SummonView } from './components/SummonView';
 import { MultiplayerView } from './components/MultiplayerView';
+import { DeckView } from './components/DeckView';
 import { useGacha } from './hooks/useGacha';
 
 function GameContent() {
@@ -159,15 +160,16 @@ function GameContent() {
     setSelectedSlot(index);
   };
 
-  const handleDeployIndividual = () => {
-    if (selectedSlot === null || !grid[selectedSlot]) return;
+  const handleDeployIndividual = (indexToDeploy) => {
+    const targetIndex = indexToDeploy !== undefined ? indexToDeploy : selectedSlot;
+    if (targetIndex === null || !grid[targetIndex]) return;
 
     // Check cooldown
-    if (cooldowns[selectedSlot] && now < cooldowns[selectedSlot]) {
+    if (cooldowns[targetIndex] && now < cooldowns[targetIndex]) {
       return addFloatingText("En recharge", 50, 80, 'damage-red');
     }
 
-    const unit = grid[selectedSlot];
+    const unit = grid[targetIndex];
     const energyCost = unit.level * 10;
 
     if (combatState.energy < energyCost) {
@@ -181,7 +183,7 @@ function GameContent() {
       // Set cooldown (e.g. 2 seconds + 0.5s per level)
       setCooldowns(prev => ({
         ...prev,
-        [selectedSlot]: Date.now() + 2000 + (unit.level * 500)
+        [targetIndex]: Date.now() + 2000 + (unit.level * 500)
       }));
     }
   };
@@ -252,15 +254,18 @@ function GameContent() {
               buildings={buildings}
             />
 
-            <div className="action-row">
+            <div style={{ marginTop: '10px' }}>
+              <h3 style={{ color: '#38bdf8', fontSize: '12px', margin: '0 0 5px 0' }}>Deck de Déploiement</h3>
+              <DeckView grid={grid} cooldowns={cooldowns} now={now} handleDeployIndividual={handleDeployIndividual} combatState={combatState} />
+            </div>
+
+            <div className="action-row" style={{ marginTop: '10px' }}>
               <div style={{display: 'flex', flexDirection: 'column', flex: 1, gap: '5px'}}>
                 <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} grid={grid} pity={pity} />
               </div>
-              <button className="assault-btn" onClick={handleDeployIndividual} disabled={selectedSlot === null || combatState.energy < (grid[selectedSlot]?.level * 10 || 0)}>
-                ⚔️ DÉPLOYER {selectedSlot !== null && grid[selectedSlot] ? `(-${grid[selectedSlot].level * 10}⚡)` : ''}
-              </button>
             </div>
 
+            <h3 style={{ color: '#10b981', fontSize: '12px', margin: '10px 0 5px 0' }}>Caserne (Fusions)</h3>
             <Grid grid={grid} selectedSlot={selectedSlot} animatingCells={animatingCells} handleCellClick={handleCellClick} cooldowns={cooldowns} now={now} />
           </div>
         )}
@@ -389,7 +394,7 @@ function GameContent() {
         )}
 
         {currentTab === 'social' && (
-          <MultiplayerView combatState={combatState} setCombatState={setCombatState} maxPlayerHp={maxPlayerHp} />
+          <MultiplayerView res={res} setRes={setRes} />
         )}
 
         {currentTab === 'settings' && (
