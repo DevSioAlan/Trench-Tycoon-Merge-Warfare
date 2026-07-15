@@ -15,11 +15,15 @@ import { deployUnitAction } from './engine/combatEngine';
 import { SummonView } from './components/SummonView';
 import { MultiplayerView } from './components/MultiplayerView';
 import { useGacha } from './hooks/useGacha';
+import { CombatView } from './components/CombatView';
+import { InventoryView } from './components/InventoryView';
+import { RosterView } from './components/RosterView';
+import { TowerDefenseView } from './components/TowerDefenseView';
 
 function GameContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentTab, setCurrentTab] = useState('battle');
+  const [currentTab, setCurrentTab] = useState('combat');
 
   const state = useSaveSystem();
   const { profile, setProfile, settings, setSettings, res, setRes, wave, setWave, grid, setGrid, buildings, setBuildings, lab, setLab, prestige, setPrestige, prestigeUps, setPrestigeUps, relics, combatState, setCombatState, pity, setPity, lastDaily, setLastDaily, afkReward, setAfkReward } = state;
@@ -95,7 +99,13 @@ function GameContent() {
     setTimeout(() => setAnimatingCells(prev => { const n = { ...prev }; delete n[index]; return n; }), 500);
   }, []);
 
-  const { activeBanner, setActiveBanner, performSummon } = useGacha({ res, setRes, grid, setGrid, setPity, setUiState, triggerAnim, summonCost });
+  const addToast = useCallback((msg, color) => {
+    const id = Date.now() + Math.random();
+    setUiState(prev => ({ ...prev, toasts: [...(prev.toasts || []), { id, msg, color }] }));
+    setTimeout(() => setUiState(prev => ({ ...prev, toasts: (prev.toasts || []).filter(t => t.id !== id) })), 3000);
+  }, [setUiState]);
+
+  const { activeBanner, setActiveBanner, performSummon } = useGacha({ res, setRes, setInventory: state.setInventory, setPity, setCinematicSummon: (sum) => setUiState(prev => ({ ...prev, cinematicSummon: sum })), addToast, summonCost });
 
   const doCameraPunch = useCallback(() => {
     if (!settings.vfx) return;
@@ -237,6 +247,15 @@ function GameContent() {
       <ProfileModal uiState={uiState} setUiState={setUiState} profile={profile} setProfile={setProfile} wave={wave} />
       <AFKModal afkReward={afkReward} setAfkReward={setAfkReward} />
 
+      {/* TOAST NOTIFICATIONS */}
+      <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 11000, display: 'flex', flexDirection: 'column', gap: '5px', pointerEvents: 'none' }}>
+        {(uiState.toasts || []).map(t => (
+          <div key={t.id} style={{ background: 'rgba(0,0,0,0.8)', border: `1px solid ${t.color}`, padding: '8px 12px', borderRadius: '4px', color: 'white', fontWeight: 'bold', fontSize: '12px' }}>
+            {t.msg}
+          </div>
+        ))}
+      </div>
+
       <div className={`game-container ${isRaidBossWave ? 'raid-alert' : ''} weather-${BETA_FEATURES ? weather : 'clear'} ${isHpCritical ? 'critical-hp-vignette' : ''}`}>
 
         {artilleryFlash && <div className="artillery-flash"></div>}
@@ -244,24 +263,30 @@ function GameContent() {
 
         <HUD profile={profile} res={res} setUiState={setUiState} />
 
-        {currentTab === 'battle' && (
+        {currentTab === 'combat' && (
+          <CombatView
+            combatState={combatState} wave={wave} isRaidBossWave={isRaidBossWave} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
+            weather={weather} rageTimer={rageTimer} ultiGauge={ultiGauge} field={field} floatingTexts={floatingTexts} triggerUltimate={triggerUltimate} raidTimer={raidTimer}
+            buildings={buildings}
+            handleDeployIndividual={handleDeployIndividual} selectedSlot={selectedSlot} grid={grid} animatingCells={animatingCells} handleCellClick={handleCellClick} cooldowns={cooldowns} now={now}
+          />
+        )}
+
+        {currentTab === 'defense' && (
+          <TowerDefenseView combatDeck={state.combatDeck} setCombatDeck={state.setCombatDeck} />
+        )}
+
+        {currentTab === 'roster' && (
+          <RosterView inventory={state.inventory} combatDeck={state.combatDeck} setCombatDeck={state.setCombatDeck} />
+        )}
+
+        {currentTab === 'inventory' && (
+          <InventoryView inventory={state.inventory} />
+        )}
+
+        {currentTab === 'summon' && (
           <div className="tab-content fade-in">
-            <Battlefield
-              combatState={combatState} wave={wave} isRaidBossWave={isRaidBossWave} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
-              weather={weather} rageTimer={rageTimer} ultiGauge={ultiGauge} field={field} floatingTexts={floatingTexts} triggerUltimate={triggerUltimate} raidTimer={raidTimer}
-              buildings={buildings}
-            />
-
-            <div className="action-row">
-              <div style={{display: 'flex', flexDirection: 'column', flex: 1, gap: '5px'}}>
-                <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} grid={grid} pity={pity} />
-              </div>
-              <button className="assault-btn" onClick={handleDeployIndividual} disabled={selectedSlot === null || combatState.energy < (grid[selectedSlot]?.level * 10 || 0)}>
-                ⚔️ DÉPLOYER {selectedSlot !== null && grid[selectedSlot] ? `(-${grid[selectedSlot].level * 10}⚡)` : ''}
-              </button>
-            </div>
-
-            <Grid grid={grid} selectedSlot={selectedSlot} animatingCells={animatingCells} handleCellClick={handleCellClick} cooldowns={cooldowns} now={now} />
+            <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} grid={grid} pity={pity} />
           </div>
         )}
 
@@ -424,13 +449,13 @@ function GameContent() {
           </div>
         )}
 
-        <nav className="bottom-nav">
-          <div className={`nav-item ${currentTab === 'battle' ? 'active' : ''}`} onClick={() => setCurrentTab('battle')}><div className="nav-icon">⚔️</div><span>Front</span></div>
+        <nav className="bottom-nav" style={{ paddingBottom: '15px' }}>
+          <div className={`nav-item ${currentTab === 'combat' ? 'active' : ''}`} onClick={() => setCurrentTab('combat')}><div className="nav-icon">⚔️</div><span>Combat</span></div>
+          <div className={`nav-item ${currentTab === 'defense' ? 'active' : ''}`} onClick={() => setCurrentTab('defense')}><div className="nav-icon">🛡️</div><span>Défense</span></div>
+          <div className={`nav-item ${currentTab === 'summon' ? 'active' : ''}`} onClick={() => setCurrentTab('summon')}><div className="nav-icon">✨</div><span>Gacha</span></div>
+          <div className={`nav-item ${currentTab === 'roster' ? 'active' : ''}`} onClick={() => setCurrentTab('roster')}><div className="nav-icon">⚓</div><span>Équipe</span></div>
+          <div className={`nav-item ${currentTab === 'inventory' ? 'active' : ''}`} onClick={() => setCurrentTab('inventory')}><div className="nav-icon">🎒</div><span>Sac</span></div>
           <div className={`nav-item ${currentTab === 'base' ? 'active' : ''}`} onClick={() => setCurrentTab('base')}><div className="nav-icon">🏗️</div><span>Base</span></div>
-          <div className={`nav-item ${currentTab === 'lab' ? 'active' : ''}`} onClick={() => setCurrentTab('lab')}><div className="nav-icon">🔬</div><span>Labo</span></div>
-          <div className={`nav-item ${currentTab === 'prestige' ? 'active' : ''}`} onClick={() => setCurrentTab('prestige')}><div className="nav-icon">🌌</div><span>Héros</span></div>
-          {BETA_FEATURES && <div className={`nav-item ${currentTab === 'social' ? 'active' : ''}`} onClick={() => setCurrentTab('social')}><div className="nav-icon">🌐</div><span>Social</span></div>}
-          <div className={`nav-item ${currentTab === 'settings' ? 'active' : ''}`} onClick={() => setCurrentTab('settings')}><div className="nav-icon">⚙️</div><span>Options</span></div>
         </nav>
 
       </div>
