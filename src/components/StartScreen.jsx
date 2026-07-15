@@ -41,7 +41,7 @@ export const StartScreen = ({ setGameStarted, settings, setSettings }) => {
         <p className="subtitle">Tactical Warfare Edition</p>
       </div>
 
-      <button className="confirm-btn pulse-action-btn" onClick={() => setGameStarted(true)}>
+      <button className="confirm-btn" data-testid="start-button" onClick={() => setGameStarted(true)} style={{ position: 'relative', zIndex: 10000, width: '80%', padding: '20px', fontSize: '20px', background: 'linear-gradient(135deg, #10b981, #059669)' }}>
         DÉPLOYER LES TROUPES
       </button>
     </div>

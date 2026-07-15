@@ -3,7 +3,7 @@ import { UNIT_TYPES, formatNum, BETA_FEATURES } from '../constants';
 
 export const Battlefield = memo(({
   combatState, wave, isRaidBossWave, waveEvent, weather, rageTimer,
-  ultiGauge, field, floatingTexts, triggerUltimate, raidTimer
+  ultiGauge, field, floatingTexts, triggerUltimate, raidTimer, buildings
 }) => {
   return (
     <>
@@ -32,21 +32,21 @@ export const Battlefield = memo(({
         {weather === 'heat' && <div className="weather-overlay weather-heat"></div>}
 
         <div className="battlefield-1d">
-          <div className="physical-base base-player">🛡️</div>
-          <div className="physical-base base-enemy">👹</div>
+          <div className="physical-base base-player" style={{ transform: `scale(${1 + ((buildings?.hq ?? 0) * 0.05)})`, transformOrigin: 'bottom left' }}>⛺</div>
+          <div className="physical-base base-enemy">🏯</div>
 
           {field?.troops?.map(t => (
             <div key={t.id} className="field-entity entity-troop" style={{ left: `${t.x}%` }}>
               <div className="unit-level-badge">Lv. {t.level}</div>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(t.hp/t.maxHp)*100}%`}}></div></div>
-              <img src={UNIT_TYPES[t.level].img} alt="T" />
+              <span className="unit-emoji" style={{ fontSize: '30px' }}>{UNIT_TYPES[t.level].emoji}</span>
             </div>
           ))}
           {field?.enemies?.map(e => (
             <div key={e.id} className={`field-entity entity-enemy ${e.isBoss ? 'is-boss' : ''}`} style={{ left: `${e.x}%` }}>
               <div className="unit-level-badge">Lv. {e.level}</div>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(e.hp/e.maxHp)*100}%`, background: '#ef4444'}}></div></div>
-              <img src={UNIT_TYPES[e.level].img} alt="E" />
+              <span className="unit-emoji" style={{ fontSize: e.isBoss ? '50px' : '30px' }}>{UNIT_TYPES[e.level].emoji}</span>
             </div>
           ))}
           {floatingTexts?.map(ft => (
