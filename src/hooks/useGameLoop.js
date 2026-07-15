@@ -45,7 +45,7 @@ export const useGameLoop = ({
 
   useEffect(() => {
     if (!isLoaded || !gameStarted) return;
-    const w = ['clear', 'clear', 'rain', 'snow', 'heat'];
+    const w = ['clear', 'clear', 'rain', 'snow', 'heat', 'storm'];
     const wt = setInterval(() => setWeather(w[Math.floor(Math.random() * w.length)]), 45000);
     return () => clearInterval(wt);
   // eslint-disable-next-line react-hooks/exhaustive-deps
