@@ -11,6 +11,10 @@ import { Battlefield } from './components/Battlefield';
 import { Grid } from './components/Grid';
 import { StartScreen } from './components/StartScreen';
 import { Cinematic, ProfileModal, AFKModal } from './components/Modals';
+import { deployUnitAction } from './engine/combatEngine';
+import { SummonView } from './components/SummonView';
+import { MultiplayerView } from './components/MultiplayerView';
+import { useGacha } from './hooks/useGacha';
 
 function GameContent() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -18,7 +22,7 @@ function GameContent() {
   const [currentTab, setCurrentTab] = useState('battle');
 
   const state = useSaveSystem();
-  const { profile, setProfile, settings, setSettings, res, setRes, wave, setWave, grid, setGrid, buildings, setBuildings, lab, setLab, prestige, setPrestige, prestigeUps, setPrestigeUps, relics, combatState, setCombatState, setPity, lastDaily, setLastDaily, afkReward, setAfkReward } = state;
+  const { profile, setProfile, settings, setSettings, res, setRes, wave, setWave, grid, setGrid, buildings, setBuildings, lab, setLab, prestige, setPrestige, prestigeUps, setPrestigeUps, relics, combatState, setCombatState, pity, setPity, lastDaily, setLastDaily, afkReward, setAfkReward } = state;
 
   const [field, setField] = useState({ troops: [], enemies: [] });
   const [ultiGauge, setUltiGauge] = useState(0);
@@ -27,10 +31,10 @@ function GameContent() {
   const [weather, setWeather] = useState('clear');
   const [waveEvent, setWaveEvent] = useState(null);
 
-  const [activeBanner, setActiveBanner] = useState('standard');
   const [uiState, setUiState] = useState({ showProfile: false, showDaily: false, cinematic: null });
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [animatingCells, setAnimatingCells] = useState({});
+  const [cooldowns, setCooldowns] = useState({});
   const [floatingTexts, setFloatingTexts] = useState([]);
   const [cameraPunch, setCameraPunch] = useState(false);
   const [screenShake, setScreenShake] = useState('');
@@ -91,6 +95,8 @@ function GameContent() {
     setTimeout(() => setAnimatingCells(prev => { const n = { ...prev }; delete n[index]; return n; }), 500);
   }, []);
 
+  const { activeBanner, setActiveBanner, performSummon } = useGacha({ res, setRes, grid, setGrid, setPity, setUiState, triggerAnim, summonCost });
+
   const doCameraPunch = useCallback(() => {
     if (!settings.vfx) return;
     setCameraPunch(true); setTimeout(() => setCameraPunch(false), 300);
@@ -111,9 +117,11 @@ function GameContent() {
   }, [settings.sfx]);
 
   const handleGameOver = useCallback(() => {
-    alert(`💥 DÉFAITE ! Le front est tombé à la Vague ${wave}.`);
-    setCombatState(prev => ({ ...prev, playerHp: maxPlayerHp, enemyMaxHp: 100, enemyHp: 100, combo: 0 }));
-    setWave(1); setGrid(Array(GRID_SIZE).fill(null)); setField({ troops: [], enemies: [] }); setUltiGauge(0); setRageTimer(0);
+    alert(`💥 RETRAITE ! La ligne de front a reculé.`);
+    setCombatState(prev => ({ ...prev, playerHp: maxPlayerHp, combo: 0, enemyHp: prev.enemyMaxHp }));
+    setWave(w => Math.max(1, w - 2));
+    setField(f => ({ ...f, enemies: [] })); // Clear current enemies on the field, but keep troops and grid
+    setUltiGauge(0); setRageTimer(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wave, maxPlayerHp]);
 
@@ -124,39 +132,6 @@ function GameContent() {
     setWave, setRaidTimer, setUltiGauge
   });
 
-  const handleSummon = (isPity = false) => {
-    const cost = isPity ? 0 : (activeBanner === 'premium' ? 10 : summonCost);
-    const canAfford = isPity || (activeBanner === 'premium' ? res.gems >= cost : res.gold >= cost);
-
-    if (canAfford) {
-      const firstEmptyIndex = grid.findIndex(cell => cell === null);
-      if (firstEmptyIndex !== -1) {
-        if (!isPity) {
-          activeBanner === 'premium' ? setRes(r => ({ ...r, gems: r.gems - cost })) : setRes(r => ({ ...r, gold: r.gold - cost }));
-        }
-
-        let spawnLevel = 1; let animType = 'pop-in';
-
-        if (isPity) {
-          spawnLevel = 5; setPity(0);
-          setUiState(u => ({ ...u, cinematic: UNIT_TYPES[spawnLevel] }));
-          setTimeout(() => setUiState(u => ({ ...u, cinematic: null })), 2000);
-        } else if (activeBanner === 'premium') {
-          spawnLevel = Math.random() > 0.8 ? 4 : 3;
-        } else {
-          const rand = Math.random();
-          if (rand < 0.65) { spawnLevel = 1; setPity(prev => Math.min(100, prev + 5)); }
-          else if (rand < 0.95) { spawnLevel = 2; }
-          else { spawnLevel = 3; animType = 'pop-in-jackpot'; }
-        }
-
-        const newGrid = [...grid];
-        const hasEquip = Math.random() < 0.05 ? 'medal' : null;
-        newGrid[firstEmptyIndex] = { level: spawnLevel, id: Date.now(), equip: hasEquip };
-        setGrid(newGrid); triggerAnim(firstEmptyIndex, animType);
-      }
-    }
-  };
 
   const handleCellClick = (index) => {
     if (selectedSlot === null) { if (grid[index]) setSelectedSlot(index); return; }
@@ -184,23 +159,31 @@ function GameContent() {
     setSelectedSlot(index);
   };
 
-  const handleAssault = () => {
-    if (combatState.energy < 20) return addFloatingText("Énergie Insuff.", 50, 80, 'damage-red');
-    const troops = grid.filter(cell => cell !== null);
-    if (troops.length === 0) return;
+  const handleDeployIndividual = () => {
+    if (selectedSlot === null || !grid[selectedSlot]) return;
 
-    setCombatState(c => ({ ...c, energy: c.energy - 20 }));
-    setField(f => {
-      const newTroops = troops.map((t, idx) => ({
-        id: Date.now() + idx, level: t.level,
-        hp: HP_MAP[t.level] * prestigeUps.dmgMult * (t.equip === 'medal' ? 1.5 : 1),
-        maxHp: HP_MAP[t.level] * prestigeUps.dmgMult * (t.equip === 'medal' ? 1.5 : 1),
-        dmg: DAMAGE_MAP[t.level] * (t.equip === 'medal' ? 1.5 : 1),
-        x: Math.random() * 10, speed: 2 + (lab.speed * 0.5)
+    // Check cooldown
+    if (cooldowns[selectedSlot] && now < cooldowns[selectedSlot]) {
+      return addFloatingText("En recharge", 50, 80, 'damage-red');
+    }
+
+    const unit = grid[selectedSlot];
+    const energyCost = unit.level * 10;
+
+    if (combatState.energy < energyCost) {
+      return addFloatingText("Énergie Insuff.", 50, 80, 'damage-red');
+    }
+
+    const result = deployUnitAction(combatState, field, unit, energyCost, prestigeUps, lab);
+    if (result) {
+      setCombatState(result.newCombatState);
+      setField(result.newField);
+      // Set cooldown (e.g. 2 seconds + 0.5s per level)
+      setCooldowns(prev => ({
+        ...prev,
+        [selectedSlot]: Date.now() + 2000 + (unit.level * 500)
       }));
-      return { ...f, troops: [...f.troops, ...newTroops] };
-    });
-    setGrid(Array(GRID_SIZE).fill(null)); setSelectedSlot(null);
+    }
   };
 
   const triggerUltimate = () => {
@@ -266,25 +249,19 @@ function GameContent() {
             <Battlefield
               combatState={combatState} wave={wave} isRaidBossWave={isRaidBossWave} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
               weather={weather} rageTimer={rageTimer} ultiGauge={ultiGauge} field={field} floatingTexts={floatingTexts} triggerUltimate={triggerUltimate} raidTimer={raidTimer}
+              buildings={buildings}
             />
 
             <div className="action-row">
               <div style={{display: 'flex', flexDirection: 'column', flex: 1, gap: '5px'}}>
-                <div className="banner-selector">
-                  <button className={activeBanner === 'standard' ? 'active' : ''} onClick={() => setActiveBanner('standard')}>Standard</button>
-                  <button className={activeBanner === 'premium' ? 'active' : ''} onClick={() => setActiveBanner('premium')}>Premium</button>
-                </div>
-                <button className="summon-btn" onClick={() => handleSummon(false)} disabled={(activeBanner === 'premium' ? res.gems < 10 : res.gold < summonCost) || !grid.includes(null)}>
-                  <span className="btn-title">INVOQUER</span>
-                  <span className="btn-cost">{activeBanner === 'premium' ? `💎 10` : `💳 ${formatNum(summonCost)}`}</span>
-                </button>
+                <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} grid={grid} pity={pity} />
               </div>
-              <button className="assault-btn" onClick={handleAssault} disabled={combatState.energy < 20 || !grid.some(c => c !== null)}>
-                ⚔️ DÉPLOYER (-20⚡)
+              <button className="assault-btn" onClick={handleDeployIndividual} disabled={selectedSlot === null || combatState.energy < (grid[selectedSlot]?.level * 10 || 0)}>
+                ⚔️ DÉPLOYER {selectedSlot !== null && grid[selectedSlot] ? `(-${grid[selectedSlot].level * 10}⚡)` : ''}
               </button>
             </div>
 
-            <Grid grid={grid} selectedSlot={selectedSlot} animatingCells={animatingCells} handleCellClick={handleCellClick} />
+            <Grid grid={grid} selectedSlot={selectedSlot} animatingCells={animatingCells} handleCellClick={handleCellClick} cooldowns={cooldowns} now={now} />
           </div>
         )}
 
@@ -412,28 +389,7 @@ function GameContent() {
         )}
 
         {currentTab === 'social' && (
-          <div className="tab-content hq-section fade-in">
-            <h2>🌐 Centre de Commandement</h2>
-            <button className="confirm-btn" onClick={() => {
-              if (now - lastDaily > 86400000) { setRes(r=>({...r, gold: r.gold+5000, gems: r.gems+50})); setLastDaily(Date.now()); alert("Cadeau récupéré!"); } else { alert("Revenez demain!"); }
-            }} style={{marginBottom: '20px'}}>
-              🎁 {(now - lastDaily) > 86400000 ? 'Ravitaillement Prêt !' : 'Déjà récupéré'}
-            </button>
-            <div className="setting-row" style={{marginBottom: '20px'}}>
-              <input type="text" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="Code promo" className="input-field" style={{width: '60%'}}/>
-              <button className="up-btn" onClick={() => { if(promoCode === 'BETA') { setRes(r=>({...r, gems: r.gems+1000})); alert('Code valide !'); setPromoCode(''); } }}>Valider</button>
-            </div>
-            {BETA_FEATURES && (
-              <>
-                <h3 style={{color: '#38bdf8'}}>🏆 Leaderboard Local (BETA)</h3>
-                <div className="upgrades-list">
-                  <div className="setting-row"><strong>1. GachaWhale</strong> <span>Vague 250</span></div>
-                  <div className="setting-row" style={{border: '1px solid #38bdf8', color: '#38bdf8'}}><strong>2. {profile.name}</strong> <span>Vague {wave}</span></div>
-                  <div className="setting-row"><strong>3. IdleNoob</strong> <span>Vague 12</span></div>
-                </div>
-              </>
-            )}
-          </div>
+          <MultiplayerView combatState={combatState} setCombatState={setCombatState} maxPlayerHp={maxPlayerHp} />
         )}
 
         {currentTab === 'settings' && (

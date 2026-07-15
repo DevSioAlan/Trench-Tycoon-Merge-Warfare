@@ -1,5 +1,26 @@
 import { UNIT_TYPES } from '../constants';
 
+import { HP_MAP, DAMAGE_MAP } from '../constants';
+
+export const deployUnitAction = (combatState, field, unit, energyCost, prestigeUps, lab) => {
+  if (combatState.energy < energyCost) return null;
+
+  const newTroop = {
+    id: Date.now() + Math.random(),
+    level: unit.level,
+    hp: HP_MAP[unit.level] * prestigeUps.dmgMult * (unit.equip === 'medal' ? 1.5 : 1),
+    maxHp: HP_MAP[unit.level] * prestigeUps.dmgMult * (unit.equip === 'medal' ? 1.5 : 1),
+    dmg: DAMAGE_MAP[unit.level] * (unit.equip === 'medal' ? 1.5 : 1),
+    x: 0, // Starts at player base
+    speed: 2 + (lab.speed * 0.5 || 0)
+  };
+
+  return {
+    newCombatState: { ...combatState, energy: combatState.energy - energyCost },
+    newField: { ...field, troops: [...field.troops, newTroop] }
+  };
+};
+
 export const processCombatTick = ({
   currentField, weather, waveEvent, lab, relics, prestigeUps, synergyBuffs, combatState, rageTimer,
   settings, particleEngine, addFloatingText, playSfx, triggerShake, doCameraPunch,
