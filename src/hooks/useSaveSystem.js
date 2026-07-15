@@ -3,12 +3,12 @@ import { SAVE_KEY, GRID_SIZE } from '../constants';
 
 export const useSaveSystem = () => {
   const [profile, setProfile] = useState({ name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue' });
-  const [settings, setSettings] = useState({ vfx: true, sfx: true, bgm: false, colorblind: false, autoBattle: false });
+  const [settings, setSettings] = useState({ vfx: true, sfx: true, bgm: false, colorblind: false, autoBattle: false, theme: 'standard' });
   const [res, setRes] = useState({ gold: 150, gems: 0, keys: 0, rp: 0 });
   const [wave, setWave] = useState(1);
   const [grid, setGrid] = useState(Array(GRID_SIZE).fill(null));
   const [buildings, setBuildings] = useState({ hq: 1, refinery: 0, lab: 0 });
-  const [lab, setLab] = useState({ goldGen: 1, baseHp: 1, summonCostReduc: 0, speed: 0, crit: 0, autoSummon: 0, autoMerge: 0 });
+  const [lab, setLab] = useState({ goldGen: 1, baseHp: 1, summonCostReduc: 0, speed: 0, crit: 0, autoSummon: 0, autoMerge: 0, infantryDmg: 0, armorHp: 0, advancedEco: 0, orbitalStrike: 0 });
   const [prestige, setPrestige] = useState({ medals: 0, crystals: 0 });
   const [prestigeUps, setPrestigeUps] = useState({ dmgMult: 1, startGold: 0, afkYield: 1 });
   const [relics, setRelics] = useState({ goldBonus: 0, critBonus: 0, dmgBonus: 0 });
@@ -31,12 +31,12 @@ export const useSaveSystem = () => {
         try {
           const p = JSON.parse(saved);
           setProfile(p.profile ?? { name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue' });
-          setSettings(p.settings ?? { vfx: true, sfx: true, bgm: false, colorblind: false, autoBattle: false });
+          setSettings(p.settings ?? { vfx: true, sfx: true, bgm: false, colorblind: false, autoBattle: false, theme: 'standard' });
           setRes(p.res ?? { gold: 150, gems: 0, keys: 0, rp: 0 });
           setWave(p.wave ?? 1);
           setGrid(p.grid ?? Array(GRID_SIZE).fill(null));
           setBuildings(p.buildings ?? { hq: 1, refinery: 0, lab: 0 });
-          setLab(p.lab ?? { goldGen: 1, baseHp: 1, summonCostReduc: 0, speed: 0, crit: 0, autoSummon: 0, autoMerge: 0 });
+          setLab({ goldGen: 1, baseHp: 1, summonCostReduc: 0, speed: 0, crit: 0, autoSummon: 0, autoMerge: 0, infantryDmg: 0, armorHp: 0, advancedEco: 0, orbitalStrike: 0, ...(p.lab || {}) });
           setPrestige(p.prestige ?? { medals: 0, crystals: 0 });
           setPrestigeUps(p.prestigeUps ?? { dmgMult: 1, startGold: 0, afkYield: 1 });
           setRelics(p.relics ?? { goldBonus: 0, critBonus: 0, dmgBonus: 0 });

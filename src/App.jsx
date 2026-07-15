@@ -248,7 +248,7 @@ function GameContent() {
   const isHpCritical = combatState.playerHp / maxPlayerHp < 0.3;
 
   return (
-    <div className={`game-wrapper ${settings.colorblind ? 'colorblind-mode' : ''} ${cameraPunch ? 'camera-punch' : ''}`}>
+    <div className={`game-wrapper theme-${settings?.theme || 'standard'} ${settings?.colorblind ? 'colorblind-mode' : ''} ${cameraPunch ? 'camera-punch' : ''}`}>
       <canvas ref={canvasRef} className="vfx-canvas" />
       <Cinematic uiState={uiState} />
       <ProfileModal uiState={uiState} setUiState={setUiState} profile={profile} setProfile={setProfile} wave={wave} />
@@ -319,21 +319,77 @@ function GameContent() {
         {currentTab === 'lab' && (
           <div className="tab-content hq-section fade-in">
             <h2 style={{color: '#a855f7'}}>🔬 Arbre Technologique</h2>
-            <div className="upgrades-list">
-              <div className="upgrade-card" style={{borderColor: '#a855f7'}}>
-                <div className="up-icon">⚔️</div>
-                <div className="up-info"><h3>Armement (Niv.{lab.crit})</h3><p>+5% Chances Crit.</p></div>
-                <button className="up-btn" style={{background:'#a855f7', color:'white'}} disabled={res.rp < (lab.crit+1) * 100} onClick={() => { setRes(r=>({...r, rp: r.rp - (lab.crit+1) * 100})); setLab(l=>({...l, crit: l.crit + 1})); }}>{(lab.crit+1) * 100} 🔬</button>
-              </div>
-              <div className="upgrade-card" style={{borderColor: '#a855f7'}}>
-                <div className="up-icon">📉</div>
-                <div className="up-info"><h3>Logistique (Niv.{lab.summonCostReduc})</h3><p>Réduit le coût d'invocation.</p></div>
-                <button className="up-btn" style={{background:'#a855f7', color:'white'}} disabled={res.rp < (lab.summonCostReduc+1) * 150} onClick={() => { setRes(r=>({...r, rp: r.rp - (lab.summonCostReduc+1) * 150})); setLab(l=>({...l, summonCostReduc: l.summonCostReduc + 1})); }}>{(lab.summonCostReduc+1) * 150} 🔬</button>
-              </div>
-              <div className="upgrade-card" style={{borderColor: '#a855f7'}}>
-                <div className="up-icon">🤖</div>
-                <div className="up-info"><h3>Auto-Summon</h3><p>{lab.autoSummon > 0 ? 'Actif' : 'Automatise les invocations'}</p></div>
-                <button className="up-btn" style={{background:'#a855f7', color:'white'}} disabled={res.rp < 1000 || lab.autoSummon > 0} onClick={() => { setRes(r=>({...r, rp: r.rp - 1000})); setLab(l=>({...l, autoSummon: 1})); }}>{lab.autoSummon > 0 ? 'ACQUIS' : '1000 🔬'}</button>
+            <div className="tech-tree-wrapper">
+              <div className="tech-tree-container">
+                {/* TIER 1 */}
+                <div className="tech-tier">
+                  <div className={`tech-node ${lab.crit > 0 ? 'unlocked' : ''}`} onClick={() => { if(res.rp >= (lab.crit+1) * 100) { setRes(r=>({...r, rp: r.rp - (lab.crit+1) * 100})); setLab(l=>({...l, crit: l.crit + 1})); }}}>
+                    <div className="tech-icon">⚔️</div>
+                    <div className="tech-name">Armement</div>
+                    <div className="tech-level">Lv.{lab.crit ?? 0}</div>
+                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.crit+1)*100} 🔬</div>
+                  </div>
+                </div>
+
+                <div className={`tech-line ${lab.crit > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
+
+                {/* TIER 2 */}
+                <div className="tech-tier">
+                  <div className={`tech-node ${lab.crit > 0 ? '' : 'fog-of-war'} ${lab.summonCostReduc > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.crit > 0 && res.rp >= (lab.summonCostReduc+1) * 150) { setRes(r=>({...r, rp: r.rp - (lab.summonCostReduc+1) * 150})); setLab(l=>({...l, summonCostReduc: l.summonCostReduc + 1})); }}}>
+                    <div className="tech-icon">📉</div>
+                    <div className="tech-name">Logistique</div>
+                    <div className="tech-level">Lv.{lab.summonCostReduc ?? 0}</div>
+                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.summonCostReduc+1)*150} 🔬</div>
+                  </div>
+                  <div className={`tech-node ${lab.crit > 0 ? '' : 'fog-of-war'} ${lab.infantryDmg > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.crit > 0 && res.rp >= (lab.infantryDmg+1) * 200) { setRes(r=>({...r, rp: r.rp - (lab.infantryDmg+1) * 200})); setLab(l=>({...l, infantryDmg: l.infantryDmg + 1})); }}}>
+                    <div className="tech-icon">🪖</div>
+                    <div className="tech-name">Infanterie+</div>
+                    <div className="tech-level">Lv.{lab.infantryDmg ?? 0}</div>
+                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.infantryDmg+1)*200} 🔬</div>
+                  </div>
+                </div>
+
+                <div style={{display: 'flex', gap: '80px'}}>
+                  <div className={`tech-line ${lab.summonCostReduc > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
+                  <div className={`tech-line ${lab.infantryDmg > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
+                </div>
+
+                {/* TIER 3 */}
+                <div className="tech-tier">
+                  <div className={`tech-node ${lab.summonCostReduc > 0 ? '' : 'fog-of-war'} ${lab.autoSummon > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.summonCostReduc > 0 && lab.autoSummon === 0 && res.rp >= 1000) { setRes(r=>({...r, rp: r.rp - 1000})); setLab(l=>({...l, autoSummon: 1})); }}}>
+                    <div className="tech-icon">🤖</div>
+                    <div className="tech-name">Auto-Summon</div>
+                    <div className="tech-level">{lab.autoSummon > 0 ? 'MAX' : '0/1'}</div>
+                    <div className="tech-name" style={{color:'#fbbf24'}}>{lab.autoSummon > 0 ? 'Acquis' : '1000 🔬'}</div>
+                  </div>
+                  <div className={`tech-node ${lab.infantryDmg > 0 ? '' : 'fog-of-war'} ${lab.armorHp > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.infantryDmg > 0 && res.rp >= (lab.armorHp+1) * 300) { setRes(r=>({...r, rp: r.rp - (lab.armorHp+1) * 300})); setLab(l=>({...l, armorHp: l.armorHp + 1})); }}}>
+                    <div className="tech-icon">🛡️</div>
+                    <div className="tech-name">Blindage</div>
+                    <div className="tech-level">Lv.{lab.armorHp ?? 0}</div>
+                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.armorHp+1)*300} 🔬</div>
+                  </div>
+                </div>
+
+                <div style={{display: 'flex', gap: '80px'}}>
+                  <div className={`tech-line ${lab.autoSummon > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
+                  <div className={`tech-line ${lab.armorHp > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
+                </div>
+
+                {/* TIER 4 */}
+                <div className="tech-tier">
+                   <div className={`tech-node ${lab.autoSummon > 0 ? '' : 'fog-of-war'} ${lab.advancedEco > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.autoSummon > 0 && res.rp >= (lab.advancedEco+1) * 500) { setRes(r=>({...r, rp: r.rp - (lab.advancedEco+1) * 500})); setLab(l=>({...l, advancedEco: l.advancedEco + 1})); }}}>
+                    <div className="tech-icon">🏭</div>
+                    <div className="tech-name">Eco Avancée</div>
+                    <div className="tech-level">Lv.{lab.advancedEco ?? 0}</div>
+                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.advancedEco+1)*500} 🔬</div>
+                  </div>
+                  <div className={`tech-node ${lab.armorHp > 0 ? '' : 'fog-of-war'} ${lab.orbitalStrike > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.armorHp > 0 && lab.orbitalStrike === 0 && res.rp >= 5000) { setRes(r=>({...r, rp: r.rp - 5000})); setLab(l=>({...l, orbitalStrike: 1})); }}}>
+                    <div className="tech-icon">🛰️</div>
+                    <div className="tech-name">Frappe Orbitale</div>
+                    <div className="tech-level">{lab.orbitalStrike > 0 ? 'MAX' : '0/1'}</div>
+                    <div className="tech-name" style={{color:'#fbbf24'}}>{lab.orbitalStrike > 0 ? 'Acquis' : '5000 🔬'}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -384,6 +440,13 @@ function GameContent() {
           <div className="tab-content hq-section fade-in">
             <h2>⚙️ Options</h2>
             <div className="upgrades-list">
+              <div className="setting-row">
+                <span>🎨 Thème UI</span>
+                <select value={settings?.theme || 'standard'} onChange={e => setSettings(s => ({...s, theme: e.target.value}))} style={{background:'#1e293b', color:'white', border:'1px solid #334155', borderRadius:'4px', padding:'2px'}}>
+                  <option value="standard">Standard</option>
+                  <option value="red-alert">Alerte Rouge</option>
+                </select>
+              </div>
               <div className="setting-row"><span>✨ VFX</span><input type="checkbox" checked={settings.vfx} onChange={e => setSettings(s => ({...s, vfx: e.target.checked}))} /></div>
               <div className="setting-row"><span>🔊 SFX</span><input type="checkbox" checked={settings.sfx} onChange={e => setSettings(s => ({...s, sfx: e.target.checked}))} /></div>
               <div className="setting-row"><span>🎵 Musique</span><input type="checkbox" checked={settings.bgm} onChange={e => setSettings(s => ({...s, bgm: e.target.checked}))} /></div>

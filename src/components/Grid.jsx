@@ -13,6 +13,7 @@ export const Grid = memo(({ grid, selectedSlot, animatingCells, handleCellClick 
           <div key={index} className={`grid-cell ${isSelected ? 'selected-pulse' : ''} ${isMergeable ? 'merge-hint' : ''} ${animClass}`} onClick={() => handleCellClick(index)}>
             {cell && (
               <div className="unit-card">
+                <div className="unit-level-badge">Lv. {cell.level}</div>
                 <div className={`aura-glow aura-${cell.level}`}></div>
                 {cell.equip === 'medal' && <div className="equip-badge">🎖️</div>}
                 <img src={UNIT_TYPES[cell.level].img} className="unit-image" alt="unit" />
