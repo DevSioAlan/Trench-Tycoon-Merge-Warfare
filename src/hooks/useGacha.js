@@ -26,36 +26,51 @@ export const useGacha = ({ res, setRes, setInventory, setPity, setCinematicSummo
     return spawnLevel;
   };
 
-  const performSummon = useCallback((amount = 1, isPity = false) => {
+  const performSummon = useCallback((amount = 1) => {
     const baseCost = activeBanner === 'premium' ? 10 : summonCost;
-    const cost = isPity ? 0 : baseCost * amount;
-    const canAfford = isPity || (activeBanner === 'premium' ? res.gems >= cost : res.gold >= cost);
+    const cost = baseCost * amount;
+    const canAfford = (activeBanner === 'premium' ? res.gems >= cost : res.gold >= cost);
 
     if (canAfford) {
-      if (!isPity) {
-        if (activeBanner === 'premium') {
-          setRes(r => ({ ...r, gems: r.gems - cost }));
-        } else {
-          setRes(r => ({ ...r, gold: r.gold - cost }));
-        }
+      if (activeBanner === 'premium') {
+        setRes(r => ({ ...r, gems: r.gems - cost }));
+      } else {
+        setRes(r => ({ ...r, gold: r.gold - cost }));
       }
 
       let newUnits = [];
       let maxLevelPulled = 1;
 
-      if (isPity) {
-        const spawnLevel = 5;
-        maxLevelPulled = spawnLevel;
-        setPity(0);
-        newUnits.push({ level: spawnLevel, id: Date.now() + Math.random().toString(), equip: Math.random() < 0.05 ? 'medal' : null });
-      } else {
+      setPity(prev => {
+        let newPity = { ...prev };
+
         for (let i = 0; i < amount; i++) {
-          const spawnLevel = getSummonResult(activeBanner);
+          newPity.legendary += 1;
+          newPity.mythic += 1;
+          newPity.ultra += 1;
+
+          let spawnLevel = getSummonResult(activeBanner);
+
+          // Hard pity triggers (checked from highest to lowest)
+          if (newPity.ultra >= 1500) {
+            spawnLevel = 6;
+          } else if (newPity.mythic >= 500 && spawnLevel < 5) {
+            spawnLevel = 5;
+          } else if (newPity.legendary >= 100 && spawnLevel < 4) {
+            spawnLevel = 4;
+          }
+
+          // Reset pity based on rarity obtained
+          if (spawnLevel === 6) newPity.ultra = 0;
+          if (spawnLevel >= 5) newPity.mythic = 0;
+          if (spawnLevel >= 4) newPity.legendary = 0;
+
           if (spawnLevel > maxLevelPulled) maxLevelPulled = spawnLevel;
           newUnits.push({ level: spawnLevel, id: Date.now() + Math.random().toString(), equip: Math.random() < 0.05 ? 'medal' : null });
-          if (spawnLevel === 1) setPity(prev => Math.min(100, prev + (100 / 90))); // Approx 90 pulls to pity
         }
-      }
+
+        return newPity;
+      });
 
       setInventory(prev => [...prev, ...newUnits]);
 

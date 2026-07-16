@@ -9,12 +9,13 @@ import { GRID_SIZE, DAMAGE_MAP, HP_MAP, UNIT_TYPES, formatNum, BETA_FEATURES, SA
 import { HUD } from './components/HUD';
 import { Battlefield } from './components/Battlefield';
 import { StartScreen } from './components/StartScreen';
-import { Cinematic, ProfileModal, AFKModal } from './components/Modals';
+import { Cinematic, ProfileModal, AFKModal, DropRateModal } from './components/Modals';
 import { deployUnitAction } from './engine/combatEngine';
 import { SummonView } from './components/SummonView';
 import { DeckView } from './components/DeckView';
 import { useGacha } from './hooks/useGacha';
 import { CombatView } from './components/CombatView';
+import { RosterView } from './components/RosterView';
 import { HubView } from './components/HubView';
 import { MapView } from './components/MapView';
 
@@ -33,7 +34,7 @@ function GameContent() {
   const [weather, setWeather] = useState('clear');
   const [waveEvent, setWaveEvent] = useState(null);
 
-  const [uiState, setUiState] = useState({ showProfile: false, showDaily: false, cinematic: null });
+  const [uiState, setUiState] = useState({ showProfile: false, showDaily: false, cinematicSummon: null, showDropRates: false });
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [animatingCells, setAnimatingCells] = useState({});
   const [cooldowns, setCooldowns] = useState({});
@@ -246,6 +247,7 @@ function GameContent() {
       <Cinematic uiState={uiState} />
       <ProfileModal uiState={uiState} setUiState={setUiState} profile={profile} setProfile={setProfile} wave={wave} />
       <AFKModal afkReward={afkReward} setAfkReward={setAfkReward} />
+      <DropRateModal uiState={uiState} setUiState={setUiState} />
 
       {/* TOAST NOTIFICATIONS */}
       <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 11000, display: 'flex', flexDirection: 'column', gap: '5px', pointerEvents: 'none' }}>
@@ -256,7 +258,7 @@ function GameContent() {
         ))}
       </div>
 
-      <div className={`game-container ${isRaidBossWave ? 'raid-alert' : ''} weather-${BETA_FEATURES ? weather : 'clear'} ${isHpCritical ? 'critical-hp-vignette' : ''}`}>
+      <div className={`game-container ${isRaidBossWave ? 'raid-alert' : ''} ${isHpCritical ? 'critical-hp-vignette' : ''}`}>
 
         {artilleryFlash && <div className="artillery-flash"></div>}
         {screenShake && <div className={`shake-overlay ${screenShake}`}></div>}
@@ -276,11 +278,11 @@ function GameContent() {
         )}
 
         {currentTab === 'deck' && (
-          <DeckView combatDeck={combatDeck} setCurrentTab={setCurrentTab} isStandalone={true} />
+          <RosterView inventory={inventory} combatDeck={combatDeck} setCombatDeck={setCombatDeck} setCurrentTab={setCurrentTab} />
         )}
 
         {currentTab === 'summon' && (
-          <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} pity={pity} setCurrentTab={setCurrentTab} />
+          <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} pity={pity} setCurrentTab={setCurrentTab} setUiState={setUiState} />
         )}
 
         {currentTab === 'quests' && (

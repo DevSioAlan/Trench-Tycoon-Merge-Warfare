@@ -20,7 +20,7 @@ export const Battlefield = memo(({
         {rageTimer > 0 && <span className="buff-rage">💉 RAGE ({rageTimer}s)</span>}
       </div>
 
-      <div className="battlefield-section">
+      <div className={`battlefield-section weather-${BETA_FEATURES ? weather : 'clear'}`}>
         <div className="battlefield-texture"></div>
 
         <div className="ulti-container" data-testid="cannon-btn" onClick={triggerUltimate}>
