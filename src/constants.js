@@ -4,15 +4,15 @@ export const SAVE_KEY = 'trench_tycoon_save_ultimate_v8';
 export const getSprite = (seed) => `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=transparent`;
 
 export const UNIT_TYPES = {
-  1: { name: 'Recrue', emoji: '🪖', color: '#94a3b8' },
-  2: { name: 'Infanterie', emoji: '🔫', color: '#3b82f6' },
-  3: { name: 'Blindé', emoji: '🛡️', color: '#a855f7' },
-  4: { name: 'Tank Léger', emoji: '🚜', color: '#eab308' },
-  5: { name: 'Mecha', emoji: '🤖', color: '#ef4444' },
-  6: { name: 'Titan', emoji: '👹', color: '#000000' },
-  7: { name: 'Éveillé', emoji: '👽', color: '#06b6d4' },
-  8: { name: 'Dieu de Guerre', emoji: '👿', color: '#f472b6' },
-  9: { name: 'Transfiguration Flower', emoji: '🌸', color: '#fde047' } // Tower Defense unit
+  1: { name: 'Recrue', emoji: '🪖', color: '#94a3b8', rarity: 'Commun', rate: 50 },
+  2: { name: 'Infanterie', emoji: '🔫', color: '#3b82f6', rarity: 'Rare', rate: 30 },
+  3: { name: 'Blindé', emoji: '🛡️', color: '#a855f7', rarity: 'Épique', rate: 15 },
+  4: { name: 'Tank Léger', emoji: '🚜', color: '#eab308', rarity: 'Légendaire', rate: 4.5 },
+  5: { name: 'Mecha', emoji: '🤖', color: '#ef4444', rarity: 'Mythique', rate: 0.4 },
+  6: { name: 'Titan', emoji: '👹', color: '#06b6d4', rarity: 'Ultra Légendaire', rate: 0.1 },
+  7: { name: 'Éveillé', emoji: '👽', color: '#f472b6', rarity: 'Commun', rate: 0 },
+  8: { name: 'Dieu de Guerre', emoji: '👿', color: '#fde047', rarity: 'Commun', rate: 0 },
+  9: { name: 'Transfiguration Flower', emoji: '🌸', color: '#fde047', rarity: 'Commun', rate: 0 }
 };
 
 export const GRID_SIZE = 12;

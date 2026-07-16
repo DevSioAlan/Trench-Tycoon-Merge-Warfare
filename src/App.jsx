@@ -8,26 +8,23 @@ import { GRID_SIZE, DAMAGE_MAP, HP_MAP, UNIT_TYPES, formatNum, BETA_FEATURES, SA
 
 import { HUD } from './components/HUD';
 import { Battlefield } from './components/Battlefield';
-import { Grid } from './components/Grid';
 import { StartScreen } from './components/StartScreen';
 import { Cinematic, ProfileModal, AFKModal } from './components/Modals';
 import { deployUnitAction } from './engine/combatEngine';
 import { SummonView } from './components/SummonView';
-import { MultiplayerView } from './components/MultiplayerView';
 import { DeckView } from './components/DeckView';
 import { useGacha } from './hooks/useGacha';
 import { CombatView } from './components/CombatView';
-import { InventoryView } from './components/InventoryView';
-import { RosterView } from './components/RosterView';
-import { TowerDefenseView } from './components/TowerDefenseView';
+import { HubView } from './components/HubView';
+import { MapView } from './components/MapView';
 
 function GameContent() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  const [currentTab, setCurrentTab] = useState('combat');
+  const [currentTab, setCurrentTab] = useState('hub');
 
   const state = useSaveSystem();
-  const { profile, setProfile, settings, setSettings, res, setRes, wave, setWave, grid, setGrid, buildings, setBuildings, lab, setLab, prestige, setPrestige, prestigeUps, setPrestigeUps, relics, combatState, setCombatState, pity, setPity, lastDaily, setLastDaily, afkReward, setAfkReward } = state;
+  const { profile, setProfile, settings, setSettings, res, setRes, wave, setWave, combatDeck, setCombatDeck, inventory, setInventory, buildings, setBuildings, lab, setLab, prestige, setPrestige, prestigeUps, setPrestigeUps, relics, combatState, setCombatState, pity, setPity, lastDaily, setLastDaily, afkReward, setAfkReward } = state;
 
   const [field, setField] = useState({ troops: [], enemies: [] });
   const [ultiGauge, setUltiGauge] = useState(0);
@@ -76,17 +73,30 @@ function GameContent() {
     if (bgmRef.current) { settings.bgm ? bgmRef.current.play().catch(()=>{}) : bgmRef.current.pause(); }
   }, [settings.bgm]);
 
+  // Auto update combat deck based on highest units for now since manual equip isn't fully implemented yet
+  useEffect(() => {
+    if (inventory && inventory.length > 0) {
+      const sorted = [...inventory].sort((a, b) => b.level - a.level);
+      const newDeck = Array(6).fill(null);
+      for(let i=0; i<Math.min(6, sorted.length); i++) {
+        newDeck[i] = sorted[i];
+      }
+      setCombatDeck(newDeck);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inventory]);
+
   const synergyBuffs = useMemo(() => {
     const counts = {};
-    grid.forEach(c => { if (c) counts[c.level] = (counts[c.level] || 0) + 1; });
+    (combatDeck || []).forEach(c => { if (c) counts[c.level] = (counts[c.level] || 0) + 1; });
     return {
       dmgMult: counts[2] >= 3 ? 1.5 : 1,
       extraHp: counts[4] >= 2 ? 1000 : 0
     };
-  }, [grid]);
+  }, [combatDeck]);
 
   const maxPlayerHp = 500 + (buildings.hq * 500) + (lab.baseHp * 250) + synergyBuffs.extraHp;
-  const summonCost = Math.max(10, Math.floor(30 * Math.pow(1.08, grid.filter(c => c !== null).length + wave) - (lab.summonCostReduc * 2)));
+  const summonCost = 150; // Fixed cost for standard summon for easier balance
   const isRaidBossWave = wave % 10 === 0;
 
   const addFloatingText = useCallback((damage, x, y, type = 'normal', sizeMult = 1) => {
@@ -106,7 +116,7 @@ function GameContent() {
     setTimeout(() => setUiState(prev => ({ ...prev, toasts: (prev.toasts || []).filter(t => t.id !== id) })), 3000);
   }, [setUiState]);
 
-  const { activeBanner, setActiveBanner, performSummon } = useGacha({ res, setRes, setInventory: state.setInventory, setPity, setCinematicSummon: (sum) => setUiState(prev => ({ ...prev, cinematicSummon: sum })), addToast, summonCost });
+  const { activeBanner, setActiveBanner, performSummon } = useGacha({ res, setRes, setInventory, setPity, setCinematicSummon: (sum) => setUiState(prev => ({ ...prev, cinematicSummon: sum })), addToast, summonCost });
 
   const doCameraPunch = useCallback(() => {
     if (!settings.vfx) return;
@@ -130,56 +140,30 @@ function GameContent() {
   const handleGameOver = useCallback(() => {
     alert(`💥 RETRAITE ! La ligne de front a reculé.`);
     setCombatState(prev => ({ ...prev, playerHp: maxPlayerHp, combo: 0, enemyHp: prev.enemyMaxHp }));
-    setWave(w => Math.max(1, w - 2));
-    setField(f => ({ ...f, enemies: [] })); // Clear current enemies on the field, but keep troops and grid
+    setField({ troops: [], enemies: [] });
+    setCurrentTab('hub');
     setUltiGauge(0); setRageTimer(0);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wave, maxPlayerHp]);
+  }, [maxPlayerHp]);
 
   useGameLoop({
     isLoaded, gameStarted, currentTab, state: { ...state, weather, waveEvent, isRaidBossWave, field, rageTimer, synergyBuffs },
-    setRes, setCombatState, setRageTimer, setField, setWeather, setWaveEvent, setGrid,
+    setRes, setCombatState, setRageTimer, setField, setWeather, setWaveEvent, setGrid: () => {},
     triggerAnim, playSfx, addFloatingText, particleEngine, doCameraPunch, triggerShake, maxPlayerHp, handleGameOver,
     setWave, setRaidTimer, setUltiGauge
   });
 
 
-  const handleCellClick = (index) => {
-    if (selectedSlot === null) { if (grid[index]) setSelectedSlot(index); return; }
-    if (selectedSlot === index) { setSelectedSlot(null); return; }
-
-    const selectedUnit = grid[selectedSlot]; const targetUnit = grid[index];
-    if (!targetUnit) {
-      const newGrid = [...grid]; newGrid[index] = selectedUnit; newGrid[selectedSlot] = null;
-      setGrid(newGrid); setSelectedSlot(null); return;
-    }
-
-    if (selectedUnit.level === targetUnit.level && selectedUnit.level < 8) {
-      const newGrid = [...grid];
-      newGrid[index] = { level: selectedUnit.level + 1, id: Date.now(), equip: selectedUnit.equip || targetUnit.equip };
-      newGrid[selectedSlot] = null;
-      setGrid(newGrid); setSelectedSlot(null);
-
-      triggerAnim(index, selectedUnit.level >= 6 ? 'awakening-shockwave' : 'merge-shockwave');
-      setUltiGauge(prev => Math.min(100, prev + 10));
-      setCombatState(c => ({...c, combo: Math.min(30, c.combo + 1)}));
-      playSfx('merge');
-      if (settings.vfx && particleEngine.current) particleEngine.current.emit(window.innerWidth/2, window.innerHeight/2, '#fde047', 'spark', 20);
-      return;
-    }
-    setSelectedSlot(index);
-  };
-
   const handleDeployIndividual = (indexToDeploy) => {
     const targetIndex = indexToDeploy !== undefined ? indexToDeploy : selectedSlot;
-    if (targetIndex === null || !grid[targetIndex]) return;
+    if (targetIndex === null || !combatDeck[targetIndex]) return;
 
     // Check cooldown
     if (cooldowns[targetIndex] && now < cooldowns[targetIndex]) {
       return addFloatingText("En recharge", 50, 80, 'damage-red');
     }
 
-    const unit = grid[targetIndex];
+    const unit = combatDeck[targetIndex];
     const energyCost = unit.level * 10;
 
     if (combatState.energy < energyCost) {
@@ -222,18 +206,6 @@ function GameContent() {
     }
   };
 
-  const handleRebirth = () => {
-    if (wave >= 50) {
-      const medalsEarned = Math.floor(wave / 10);
-      setPrestige(p => ({ ...p, medals: p.medals + medalsEarned }));
-      setWave(1); setRes(r => ({ ...r, gold: prestigeUps.startGold }));
-      setGrid(Array(GRID_SIZE).fill(null)); setField({troops:[], enemies:[]});
-      setCombatState({ playerHp: maxPlayerHp, enemyMaxHp: 100, enemyHp: 100, energy: 100, combo: 0 });
-      setRageTimer(0);
-      alert(`🌠 PRESTIGE ! +${medalsEarned} Médailles de Bravoure.`);
-      setCurrentTab('prestige');
-    }
-  };
 
   if (!gameStarted) {
     return <StartScreen setGameStarted={setGameStarted} settings={settings} setSettings={setSettings} />;
@@ -265,162 +237,45 @@ function GameContent() {
 
         <HUD profile={profile} res={res} setUiState={setUiState} />
 
+        {currentTab === 'hub' && <HubView setCurrentTab={setCurrentTab} />}
+        {currentTab === 'map' && <MapView maxWave={wave} setCurrentTab={setCurrentTab} onSelectLevel={(l) => { setWave(l); setCurrentTab('combat'); setField({troops:[], enemies:[]}); }} />}
+
         {currentTab === 'combat' && (
           <CombatView
             combatState={combatState} wave={wave} isRaidBossWave={isRaidBossWave} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
             weather={weather} rageTimer={rageTimer} ultiGauge={ultiGauge} field={field} floatingTexts={floatingTexts} triggerUltimate={triggerUltimate} raidTimer={raidTimer}
-            buildings={buildings}
-            handleDeployIndividual={handleDeployIndividual} selectedSlot={selectedSlot} grid={grid} animatingCells={animatingCells} handleCellClick={handleCellClick} cooldowns={cooldowns} now={now}
+            buildings={buildings} combatDeck={combatDeck} setCurrentTab={setCurrentTab}
+            handleDeployIndividual={handleDeployIndividual} cooldowns={cooldowns} now={now}
           />
         )}
 
-        {currentTab === 'defense' && (
-          <TowerDefenseView combatDeck={state.combatDeck} setCombatDeck={state.setCombatDeck} />
-        )}
-
-        {currentTab === 'roster' && (
-          <RosterView inventory={state.inventory} combatDeck={state.combatDeck} setCombatDeck={state.setCombatDeck} />
-        )}
-
-        {currentTab === 'inventory' && (
-          <InventoryView inventory={state.inventory} />
+        {currentTab === 'deck' && (
+          <DeckView combatDeck={combatDeck} setCurrentTab={setCurrentTab} isStandalone={true} />
         )}
 
         {currentTab === 'summon' && (
-          <div className="tab-content fade-in">
-            <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} grid={grid} pity={pity} />
-          </div>
+          <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} pity={pity} setCurrentTab={setCurrentTab} />
         )}
 
-        {currentTab === 'base' && (
-          <div className="tab-content hq-section fade-in">
-            <h2>🏗️ Base Militaire</h2>
-            <div className="upgrades-list">
-              <div className="upgrade-card consumable-card">
-                <div className="up-icon">💉</div>
-                <div className="up-info"><h3 style={{color: '#ef4444'}}>Sérum de Rage</h3><p>Dégâts x2 pendant 15s.</p></div>
-                <button className="up-btn consumable-btn" disabled={res.gold < 5000 || rageTimer > 0} onClick={buyRageSerum}>{rageTimer > 0 ? 'ACTIF' : '5K 💰'}</button>
-              </div>
-              <div className="upgrade-card">
-                <div className="up-icon">⛺</div>
-                <div className="up-info"><h3>Quartier Général (Niv.{buildings.hq})</h3><p>+500 HP Base.</p></div>
-                <button className="up-btn" disabled={res.steel < buildings.hq * 100} onClick={() => { setRes(r=>({...r, steel: r.steel - buildings.hq * 100})); setBuildings(b=>({...b, hq: b.hq + 1})); setCombatState(c => ({...c, playerHp: c.playerHp + 500})); }}>{buildings.hq * 100} ⚙️</button>
-              </div>
-              <div className="upgrade-card">
-                <div className="up-icon">🏭</div>
-                <div className="up-info"><h3>Raffinerie (Niv.{buildings.refinery})</h3><p>+{formatNum((buildings.refinery+1)*2)} Or/s, +1 Acier/s.</p></div>
-                <button className="up-btn" disabled={res.gold < (buildings.refinery+1) * 1000} onClick={() => { setRes(r=>({...r, gold: r.gold - (buildings.refinery+1) * 1000})); setBuildings(b=>({...b, refinery: b.refinery + 1})); }}>{(buildings.refinery+1) * 1000} 💰</button>
-              </div>
-              <div className="upgrade-card">
-                <div className="up-icon">🔬</div>
-                <div className="up-info"><h3>Laboratoire (Niv.{buildings.lab})</h3><p>+1 Point Recherche/s.</p></div>
-                <button className="up-btn" disabled={res.steel < (buildings.lab+1) * 50} onClick={() => { setRes(r=>({...r, steel: r.steel - (buildings.lab+1) * 50})); setBuildings(b=>({...b, lab: b.lab + 1})); }}>{(buildings.lab+1) * 50} ⚙️</button>
-              </div>
+        {currentTab === 'quests' && (
+          <div className="tab-content fade-in" style={{ padding: '20px' }}>
+             <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', marginBottom: '20px' }}>
+              <button className="confirm-btn" style={{ width: 'auto', background: '#334155' }} onClick={() => setCurrentTab('hub')}>
+                ⬅️ RETOUR
+              </button>
             </div>
+            <h2 style={{ textAlign: 'center' }}>QUÊTES & SUCCÈS</h2>
+            <p style={{ textAlign: 'center', color: '#94a3b8' }}>En développement...</p>
           </div>
-        )}
-
-        {currentTab === 'lab' && (
-          <div className="tab-content hq-section fade-in">
-            <h2 style={{color: '#a855f7'}}>🔬 Arbre Technologique</h2>
-            <div className="tech-tree-wrapper">
-              <div className="tech-tree-container">
-                {/* TIER 1 */}
-                <div className="tech-tier">
-                  <div className={`tech-node ${lab.crit > 0 ? 'unlocked' : ''}`} onClick={() => { if(res.rp >= (lab.crit+1) * 100) { setRes(r=>({...r, rp: r.rp - (lab.crit+1) * 100})); setLab(l=>({...l, crit: l.crit + 1})); }}}>
-                    <div className="tech-icon">⚔️</div>
-                    <div className="tech-name">Armement</div>
-                    <div className="tech-level">Lv.{lab.crit ?? 0}</div>
-                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.crit+1)*100} 🔬</div>
-                  </div>
-                </div>
-
-                <div className={`tech-line ${lab.crit > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
-
-                {/* TIER 2 */}
-                <div className="tech-tier">
-                  <div className={`tech-node ${lab.crit > 0 ? '' : 'fog-of-war'} ${lab.summonCostReduc > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.crit > 0 && res.rp >= (lab.summonCostReduc+1) * 150) { setRes(r=>({...r, rp: r.rp - (lab.summonCostReduc+1) * 150})); setLab(l=>({...l, summonCostReduc: l.summonCostReduc + 1})); }}}>
-                    <div className="tech-icon">📉</div>
-                    <div className="tech-name">Logistique</div>
-                    <div className="tech-level">Lv.{lab.summonCostReduc ?? 0}</div>
-                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.summonCostReduc+1)*150} 🔬</div>
-                  </div>
-                  <div className={`tech-node ${lab.crit > 0 ? '' : 'fog-of-war'} ${lab.infantryDmg > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.crit > 0 && res.rp >= (lab.infantryDmg+1) * 200) { setRes(r=>({...r, rp: r.rp - (lab.infantryDmg+1) * 200})); setLab(l=>({...l, infantryDmg: l.infantryDmg + 1})); }}}>
-                    <div className="tech-icon">🪖</div>
-                    <div className="tech-name">Infanterie+</div>
-                    <div className="tech-level">Lv.{lab.infantryDmg ?? 0}</div>
-                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.infantryDmg+1)*200} 🔬</div>
-                  </div>
-                </div>
-
-                <div style={{display: 'flex', gap: '80px'}}>
-                  <div className={`tech-line ${lab.summonCostReduc > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
-                  <div className={`tech-line ${lab.infantryDmg > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
-                </div>
-
-                {/* TIER 3 */}
-                <div className="tech-tier">
-                  <div className={`tech-node ${lab.summonCostReduc > 0 ? '' : 'fog-of-war'} ${lab.autoSummon > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.summonCostReduc > 0 && lab.autoSummon === 0 && res.rp >= 1000) { setRes(r=>({...r, rp: r.rp - 1000})); setLab(l=>({...l, autoSummon: 1})); }}}>
-                    <div className="tech-icon">🤖</div>
-                    <div className="tech-name">Auto-Summon</div>
-                    <div className="tech-level">{lab.autoSummon > 0 ? 'MAX' : '0/1'}</div>
-                    <div className="tech-name" style={{color:'#fbbf24'}}>{lab.autoSummon > 0 ? 'Acquis' : '1000 🔬'}</div>
-                  </div>
-                  <div className={`tech-node ${lab.infantryDmg > 0 ? '' : 'fog-of-war'} ${lab.armorHp > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.infantryDmg > 0 && res.rp >= (lab.armorHp+1) * 300) { setRes(r=>({...r, rp: r.rp - (lab.armorHp+1) * 300})); setLab(l=>({...l, armorHp: l.armorHp + 1})); }}}>
-                    <div className="tech-icon">🛡️</div>
-                    <div className="tech-name">Blindage</div>
-                    <div className="tech-level">Lv.{lab.armorHp ?? 0}</div>
-                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.armorHp+1)*300} 🔬</div>
-                  </div>
-                </div>
-
-                <div style={{display: 'flex', gap: '80px'}}>
-                  <div className={`tech-line ${lab.autoSummon > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
-                  <div className={`tech-line ${lab.armorHp > 0 ? 'active' : ''}`} style={{height: '30px', width: '2px'}}></div>
-                </div>
-
-                {/* TIER 4 */}
-                <div className="tech-tier">
-                   <div className={`tech-node ${lab.autoSummon > 0 ? '' : 'fog-of-war'} ${lab.advancedEco > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.autoSummon > 0 && res.rp >= (lab.advancedEco+1) * 500) { setRes(r=>({...r, rp: r.rp - (lab.advancedEco+1) * 500})); setLab(l=>({...l, advancedEco: l.advancedEco + 1})); }}}>
-                    <div className="tech-icon">🏭</div>
-                    <div className="tech-name">Eco Avancée</div>
-                    <div className="tech-level">Lv.{lab.advancedEco ?? 0}</div>
-                    <div className="tech-name" style={{color:'#fbbf24'}}>{(lab.advancedEco+1)*500} 🔬</div>
-                  </div>
-                  <div className={`tech-node ${lab.armorHp > 0 ? '' : 'fog-of-war'} ${lab.orbitalStrike > 0 ? 'unlocked' : ''}`} onClick={() => { if(lab.armorHp > 0 && lab.orbitalStrike === 0 && res.rp >= 5000) { setRes(r=>({...r, rp: r.rp - 5000})); setLab(l=>({...l, orbitalStrike: 1})); }}}>
-                    <div className="tech-icon">🛰️</div>
-                    <div className="tech-name">Frappe Orbitale</div>
-                    <div className="tech-level">{lab.orbitalStrike > 0 ? 'MAX' : '0/1'}</div>
-                    <div className="tech-name" style={{color:'#fbbf24'}}>{lab.orbitalStrike > 0 ? 'Acquis' : '5000 🔬'}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentTab === 'prestige' && (
-          <div className="tab-content hq-section fade-in">
-            <h2 className="rainbow-text">🌌 Ascension</h2>
-            <div className="prestige-tree">
-              <div className="upgrade-card prestige-card"><div className="up-icon">⚔️</div><div className="up-info"><h3>Dégâts Globaux</h3><p>x{prestigeUps.dmgMult.toFixed(1)}</p></div><button className="up-btn prestige-btn" disabled={prestige.medals < 1} onClick={() => { setPrestige(p=>({...p, medals: p.medals-1})); setPrestigeUps(u=>({...u, dmgMult: u.dmgMult+0.5})) }}>1 🏅</button></div>
-              <button className="rebirth-btn" disabled={wave < 50} onClick={handleRebirth}>{wave < 50 ? `Atteindre Vague 50 (${wave}/50)` : '⭐ PRESTIGE ⭐'}</button>
-            </div>
-            <h3 style={{color: '#06b6d4', marginTop:'20px'}}>💎 Reliques</h3>
-            <div className="relics-container">
-              <div className="relic-item">🏺 <span>+{(relics.goldBonus * 100).toFixed(0)}% Or</span></div>
-              <div className="relic-item">👁️ <span>+{(relics.critBonus * 100).toFixed(0)}% Crit</span></div>
-              <div className="relic-item">⚔️ <span>+{(relics.dmgBonus * 100).toFixed(0)}% Dmg</span></div>
-            </div>
-          </div>
-        )}
-
-        {currentTab === 'social' && (
-          <MultiplayerView res={res} setRes={setRes} />
         )}
 
         {currentTab === 'settings' && (
-          <div className="tab-content hq-section fade-in">
+          <div className="tab-content hq-section fade-in" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', marginBottom: '20px' }}>
+              <button className="confirm-btn" style={{ width: 'auto', background: '#334155' }} onClick={() => setCurrentTab('hub')}>
+                ⬅️ RETOUR
+              </button>
+            </div>
             <h2>⚙️ Options</h2>
             <div className="upgrades-list">
               <div className="setting-row">
@@ -434,7 +289,7 @@ function GameContent() {
               <div className="setting-row"><span>🔊 SFX</span><input type="checkbox" checked={settings.sfx} onChange={e => setSettings(s => ({...s, sfx: e.target.checked}))} /></div>
               <div className="setting-row"><span>🎵 Musique</span><input type="checkbox" checked={settings.bgm} onChange={e => setSettings(s => ({...s, bgm: e.target.checked}))} /></div>
               <div className="setting-row"><span>👁️ Mode Daltonien</span><input type="checkbox" checked={settings.colorblind} onChange={e => setSettings(s => ({...s, colorblind: e.target.checked}))} /></div>
-              {BETA_FEATURES && <div className="setting-row" style={{border: '1px dashed #ef4444'}}><span style={{color: '#ef4444'}}>🧪 BETA: Auto-Assaut</span><input type="checkbox" checked={settings.autoBattle} onChange={e => setSettings(s => ({...s, autoBattle: e.target.checked}))} /></div>}
+
               <div style={{display: 'flex', gap: '10px', marginTop: '20px'}}>
                 <button className="confirm-btn" style={{flex: 1, fontSize: '12px'}} onClick={() => {
                   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(localStorage.getItem(SAVE_KEY) || "");
@@ -450,19 +305,6 @@ function GameContent() {
             </div>
           </div>
         )}
-
-        <nav className="bottom-nav" style={{ paddingBottom: '15px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <div className={`nav-item ${currentTab === 'combat' ? 'active' : ''}`} onClick={() => setCurrentTab('combat')}><div className="nav-icon">⚔️</div><span>Combat</span></div>
-          <div className={`nav-item ${currentTab === 'defense' ? 'active' : ''}`} onClick={() => setCurrentTab('defense')}><div className="nav-icon">🛡️</div><span>Défense</span></div>
-          <div className={`nav-item ${currentTab === 'summon' ? 'active' : ''}`} onClick={() => setCurrentTab('summon')}><div className="nav-icon">✨</div><span>Gacha</span></div>
-          <div className={`nav-item ${currentTab === 'roster' ? 'active' : ''}`} onClick={() => setCurrentTab('roster')}><div className="nav-icon">⚓</div><span>Équipe</span></div>
-          <div className={`nav-item ${currentTab === 'inventory' ? 'active' : ''}`} onClick={() => setCurrentTab('inventory')}><div className="nav-icon">🎒</div><span>Sac</span></div>
-          <div className={`nav-item ${currentTab === 'base' ? 'active' : ''}`} onClick={() => setCurrentTab('base')}><div className="nav-icon">🏗️</div><span>Base</span></div>
-          <div className={`nav-item ${currentTab === 'lab' ? 'active' : ''}`} onClick={() => setCurrentTab('lab')}><div className="nav-icon">🔬</div><span>Labo</span></div>
-          <div className={`nav-item ${currentTab === 'prestige' ? 'active' : ''}`} onClick={() => setCurrentTab('prestige')}><div className="nav-icon">🌌</div><span>Héros</span></div>
-          {BETA_FEATURES && <div className={`nav-item ${currentTab === 'social' ? 'active' : ''}`} onClick={() => setCurrentTab('social')}><div className="nav-icon">🌐</div><span>Social</span></div>}
-          <div className={`nav-item ${currentTab === 'settings' ? 'active' : ''}`} onClick={() => setCurrentTab('settings')}><div className="nav-icon">⚙️</div><span>Options</span></div>
-        </nav>
 
       </div>
     </div>
