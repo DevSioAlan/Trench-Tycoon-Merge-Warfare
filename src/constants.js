@@ -11,12 +11,13 @@ export const UNIT_TYPES = {
   5: { name: 'Mecha', emoji: '🤖', color: '#ef4444' },
   6: { name: 'Titan', emoji: '👹', color: '#000000' },
   7: { name: 'Éveillé', emoji: '👽', color: '#06b6d4' },
-  8: { name: 'Dieu de Guerre', emoji: '👿', color: '#f472b6' }
+  8: { name: 'Dieu de Guerre', emoji: '👿', color: '#f472b6' },
+  9: { name: 'Transfiguration Flower', emoji: '🌸', color: '#fde047' } // Tower Defense unit
 };
 
 export const GRID_SIZE = 12;
-export const DAMAGE_MAP = { 1: 5, 2: 25, 3: 100, 4: 400, 5: 1500, 6: 6000, 7: 25000, 8: 120000 };
-export const HP_MAP = { 1: 20, 2: 80, 3: 300, 4: 1200, 5: 5000, 6: 20000, 7: 80000, 8: 300000 };
+export const DAMAGE_MAP = { 1: 5, 2: 25, 3: 100, 4: 400, 5: 1500, 6: 6000, 7: 25000, 8: 120000, 9: 1000 };
+export const HP_MAP = { 1: 20, 2: 80, 3: 300, 4: 1200, 5: 5000, 6: 20000, 7: 80000, 8: 300000, 9: 15000 };
 
 export const formatNum = (num) => {
   if (num == null) return "0";
