@@ -14,7 +14,7 @@ export const useSaveSystem = () => {
   const [prestige, setPrestige] = useState({ medals: 0, crystals: 0 });
   const [prestigeUps, setPrestigeUps] = useState({ dmgMult: 1, startGold: 0, afkYield: 1 });
   const [relics, setRelics] = useState({ goldBonus: 0, critBonus: 0, dmgBonus: 0 });
-  const [combatState, setCombatState] = useState({ playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 100, combo: 0 });
+  const [combatState, setCombatState] = useState({ playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 0, combo: 0, energyLevel: 1, maxEnergy: 100, energyGen: 5 });
   const [pity, setPity] = useState(0);
   const [lastDaily, setLastDaily] = useState(0);
 
@@ -44,7 +44,7 @@ export const useSaveSystem = () => {
           setPrestige(p.prestige ?? { medals: 0, crystals: 0 });
           setPrestigeUps(p.prestigeUps ?? { dmgMult: 1, startGold: 0, afkYield: 1 });
           setRelics(p.relics ?? { goldBonus: 0, critBonus: 0, dmgBonus: 0 });
-          setCombatState(p.combatState ?? { playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 100, combo: 0 });
+          setCombatState(p.combatState ?? { playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 0, combo: 0, energyLevel: 1, maxEnergy: 100, energyGen: 5 });
           setPity(p.pity ?? 0);
           setLastDaily(p.lastDaily ?? 0);
 

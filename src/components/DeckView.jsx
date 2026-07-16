@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { UNIT_TYPES } from '../constants';
 
-export const DeckView = memo(({ combatDeck, cooldowns, now, handleDeployIndividual, combatState, setCurrentTab, isStandalone }) => {
+export const DeckView = memo(({ combatDeck, cooldowns, now, handleDeployIndividual, combatState, setCurrentTab, isStandalone, handleUpgradeEnergy }) => {
   // If isStandalone, it means we are in the HUB menu looking at our deck
   // Otherwise, we are in combat.
 
@@ -44,15 +44,35 @@ export const DeckView = memo(({ combatDeck, cooldowns, now, handleDeployIndividu
     );
   }
 
+
   // Combat Mode Render
+  const upgradeCost = Math.floor(100 * Math.pow(1.5, (combatState?.energyLevel || 1) - 1));
+  const canUpgrade = combatState?.energy >= upgradeCost;
+
   return (
-    <div className="deck-container" style={{ display: 'flex', gap: '8px', padding: '10px', background: '#0f172a', borderRadius: '12px', overflowX: 'auto', border: '1px solid #334155', justifyContent: 'center' }}>
+    <div className="deck-container" style={{ display: 'flex', gap: '8px', padding: '10px', background: '#0f172a', borderRadius: '12px', overflowX: 'auto', border: '1px solid #334155', justifyContent: 'center', alignItems: 'center' }}>
+
+      <div
+        data-testid="upgrade-energy-btn"
+        onClick={handleUpgradeEnergy}
+        style={{
+          width: '60px', height: '80px', background: '#1e293b', borderRadius: '8px',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          cursor: canUpgrade ? 'pointer' : 'not-allowed', opacity: canUpgrade ? 1 : 0.5,
+          border: `2px solid ${canUpgrade ? '#10b981' : '#475569'}`, marginRight: '10px', position: 'relative'
+        }}
+      >
+        <div style={{ fontSize: '20px' }}>⚡</div>
+        <div style={{ fontSize: '10px', color: '#fbbf24', textAlign: 'center' }}>Niv. {combatState?.energyLevel || 1}</div>
+        <div style={{ fontSize: '10px', color: 'white', background: '#ef4444', padding: '2px', borderRadius: '4px', marginTop: '5px' }}>{upgradeCost}⚡</div>
+      </div>
+
       {(combatDeck || Array(6).fill(null)).map((unit, idx) => {
         if (!unit) {
            return <div key={idx} style={{ width: '60px', height: '80px', background: '#1e293b', border: '2px dashed #334155', borderRadius: '8px' }}></div>;
         }
 
-        const energyCost = unit.level * 10;
+        const energyCost = UNIT_TYPES[unit.level]?.cost || (unit.level * 10);
         const cooldownTime = cooldowns && cooldowns[idx] ? cooldowns[idx] : 0;
         const isOnCooldown = cooldownTime > now;
         const cdRemaining = isOnCooldown ? Math.ceil((cooldownTime - now) / 1000) : 0;
@@ -62,6 +82,7 @@ export const DeckView = memo(({ combatDeck, cooldowns, now, handleDeployIndividu
         return (
           <div
             key={idx}
+            data-testid={`deploy-unit-${idx}`}
             onClick={() => handleDeployIndividual(idx)}
             style={{
               width: '60px', height: '80px', background: '#1e293b', borderRadius: '8px',

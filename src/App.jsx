@@ -154,6 +154,24 @@ function GameContent() {
   });
 
 
+
+  const handleUpgradeEnergy = () => {
+    const cost = Math.floor(100 * Math.pow(1.5, combatState.energyLevel - 1));
+    if (combatState.energy >= cost) {
+      setCombatState(prev => ({
+        ...prev,
+        energy: prev.energy - cost,
+        energyLevel: prev.energyLevel + 1,
+        maxEnergy: prev.maxEnergy + 50,
+        energyGen: prev.energyGen + 2
+      }));
+      playSfx('upgrade');
+      addFloatingText('ÉNERGIE MAX UP!', 50, 80, 'damage-gold');
+    } else {
+      addFloatingText('Énergie insuffisante', 50, 80, 'damage-red');
+    }
+  };
+
   const handleDeployIndividual = (indexToDeploy) => {
     const targetIndex = indexToDeploy !== undefined ? indexToDeploy : selectedSlot;
     if (targetIndex === null || !combatDeck[targetIndex]) return;
@@ -164,7 +182,7 @@ function GameContent() {
     }
 
     const unit = combatDeck[targetIndex];
-    const energyCost = unit.level * 10;
+    const energyCost = UNIT_TYPES[unit.level]?.cost || (unit.level * 10);
 
     if (combatState.energy < energyCost) {
       return addFloatingText("Énergie Insuff.", 50, 80, 'damage-red');
@@ -177,7 +195,7 @@ function GameContent() {
       // Set cooldown (e.g. 2 seconds + 0.5s per level)
       setCooldowns(prev => ({
         ...prev,
-        [targetIndex]: Date.now() + 2000 + (unit.level * 500)
+        [targetIndex]: Date.now() + (UNIT_TYPES[unit.level]?.deployCooldown || 2000)
       }));
     }
   };
@@ -188,7 +206,15 @@ function GameContent() {
     setTimeout(() => {
       setArtilleryFlash(false);
       const ultiDamage = combatState.playerHp * 20 * prestigeUps.dmgMult * (1 + relics.dmgBonus);
-      setField(f => ({ ...f, enemies: [] })); // Wipe enemies
+
+      setField(f => ({
+        ...f,
+        enemies: f.enemies.map(e => ({
+          ...e,
+          x: Math.min(100, e.x + 20) // Knockback
+        }))
+      }));
+
       setCombatState(c => {
          const newHp = Math.max(0, c.enemyHp - ultiDamage);
          addFloatingText(ultiDamage, 90, 50, 'damage-crit', 2);
@@ -245,7 +271,7 @@ function GameContent() {
             combatState={combatState} wave={wave} isRaidBossWave={isRaidBossWave} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
             weather={weather} rageTimer={rageTimer} ultiGauge={ultiGauge} field={field} floatingTexts={floatingTexts} triggerUltimate={triggerUltimate} raidTimer={raidTimer}
             buildings={buildings} combatDeck={combatDeck} setCurrentTab={setCurrentTab}
-            handleDeployIndividual={handleDeployIndividual} cooldowns={cooldowns} now={now}
+            handleDeployIndividual={handleDeployIndividual} cooldowns={cooldowns} now={now} handleUpgradeEnergy={handleUpgradeEnergy}
           />
         )}
 

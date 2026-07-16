@@ -4,20 +4,20 @@ export const SAVE_KEY = 'trench_tycoon_save_ultimate_v8';
 export const getSprite = (seed) => `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}&backgroundColor=transparent`;
 
 export const UNIT_TYPES = {
-  1: { name: 'Recrue', emoji: '🪖', color: '#94a3b8', rarity: 'Commun', rate: 50 },
-  2: { name: 'Infanterie', emoji: '🔫', color: '#3b82f6', rarity: 'Rare', rate: 30 },
-  3: { name: 'Blindé', emoji: '🛡️', color: '#a855f7', rarity: 'Épique', rate: 15 },
-  4: { name: 'Tank Léger', emoji: '🚜', color: '#eab308', rarity: 'Légendaire', rate: 4.5 },
-  5: { name: 'Mecha', emoji: '🤖', color: '#ef4444', rarity: 'Mythique', rate: 0.4 },
-  6: { name: 'Titan', emoji: '👹', color: '#06b6d4', rarity: 'Ultra Légendaire', rate: 0.1 },
-  7: { name: 'Éveillé', emoji: '👽', color: '#f472b6', rarity: 'Commun', rate: 0 },
-  8: { name: 'Dieu de Guerre', emoji: '👿', color: '#fde047', rarity: 'Commun', rate: 0 },
-  9: { name: 'Transfiguration Flower', emoji: '🌸', color: '#fde047', rarity: 'Commun', rate: 0 }
+  1: { name: 'Recrue', emoji: '🪖', color: '#94a3b8', rarity: 'Commun', rate: 50, cost: 50, hp: 100, damage: 15, speed: 1.5, range: 5, atkCooldown: 1000, deployCooldown: 2000 },
+  2: { name: 'Rusher', emoji: '🦊', color: '#3b82f6', rarity: 'Rare', rate: 30, cost: 75, hp: 80, damage: 30, speed: 3.5, range: 5, atkCooldown: 800, deployCooldown: 3000 },
+  3: { name: 'Blindé', emoji: '🛡️', color: '#a855f7', rarity: 'Épique', rate: 15, cost: 150, hp: 600, damage: 10, speed: 0.8, range: 5, atkCooldown: 2000, deployCooldown: 5000 },
+  4: { name: 'Tank Léger', emoji: '🚜', color: '#eab308', rarity: 'Légendaire', rate: 4.5, cost: 300, hp: 800, damage: 50, speed: 1.2, range: 10, atkCooldown: 1500, deployCooldown: 8000 },
+  5: { name: 'Mecha', emoji: '🤖', color: '#ef4444', rarity: 'Mythique', rate: 0.4, cost: 600, hp: 1500, damage: 150, speed: 1.0, range: 15, atkCooldown: 2000, deployCooldown: 12000 },
+  6: { name: 'Titan', emoji: '👹', color: '#06b6d4', rarity: 'Ultra Légendaire', rate: 0.1, cost: 1200, hp: 3000, damage: 400, speed: 0.7, range: 10, atkCooldown: 3000, deployCooldown: 20000 },
+  7: { name: 'Éveillé', emoji: '👽', color: '#f472b6', rarity: 'Commun', rate: 0, cost: 2500, hp: 6000, damage: 1000, speed: 1.5, range: 20, atkCooldown: 2000, deployCooldown: 30000 },
+  8: { name: 'Dieu de Guerre', emoji: '👿', color: '#fde047', rarity: 'Commun', rate: 0, cost: 5000, hp: 15000, damage: 3000, speed: 1.0, range: 10, atkCooldown: 1500, deployCooldown: 40000 },
+  9: { name: 'Transfiguration Flower', emoji: '🌸', color: '#fde047', rarity: 'Commun', rate: 0, cost: 4000, hp: 500, damage: 5000, speed: 0.5, range: 40, atkCooldown: 6000, deployCooldown: 35000 }
 };
 
 export const GRID_SIZE = 12;
-export const DAMAGE_MAP = { 1: 5, 2: 25, 3: 100, 4: 400, 5: 1500, 6: 6000, 7: 25000, 8: 120000, 9: 1000 };
-export const HP_MAP = { 1: 20, 2: 80, 3: 300, 4: 1200, 5: 5000, 6: 20000, 7: 80000, 8: 300000, 9: 15000 };
+export const DAMAGE_MAP = Object.fromEntries(Object.entries(UNIT_TYPES).map(([k, v]) => [k, v.damage]));
+export const HP_MAP = Object.fromEntries(Object.entries(UNIT_TYPES).map(([k, v]) => [k, v.hp]));
 
 export const formatNum = (num) => {
   if (num == null) return "0";

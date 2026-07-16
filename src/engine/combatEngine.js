@@ -12,7 +12,8 @@ export const deployUnitAction = (combatState, field, unit, energyCost, prestigeU
     maxHp: HP_MAP[unit.level] * prestigeUps.dmgMult * (unit.equip === 'medal' ? 1.5 : 1),
     dmg: DAMAGE_MAP[unit.level] * (unit.equip === 'medal' ? 1.5 : 1),
     x: 5, // Starts at player base (extreme left)
-    speed: 2 + (lab.speed * 0.5 || 0)
+    speed: (UNIT_TYPES[unit.level]?.speed || 1.5) + (lab.speed * 0.5 || 0),
+    lastAttack: 0
   };
 
   return {
@@ -40,33 +41,49 @@ export const processCombatTick = ({
   newTroops.sort((a, b) => b.x - a.x);
   newEnemies.sort((a, b) => a.x - b.x);
 
+
   newTroops.forEach(t => {
     if (heatDmg) { t.hp -= heatDmg; addFloatingText(heatDmg, t.x, 60, 'damage-red', 0.5); }
 
-    let target = newEnemies.find(e => Math.abs(e.x - t.x) < 5); // strict melee range
-    if (!target && t.x >= 95) {
-      // Reached enemy base
-      const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
-      let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
-      if (isCrit) tDmg *= 2;
-      eDamageTaken += tDmg;
-      t.hp = 0; // Sacrificed at base
-      addFloatingText(tDmg, 95, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
-      if (isCrit) doCameraPunch();
-    } else if (target) {
-      const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
-      let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
-      if (isCrit) tDmg *= 2;
+    const unitDef = UNIT_TYPES[t.level] || {};
+    const range = unitDef.range || 5;
+    const atkCooldown = unitDef.atkCooldown || 1000;
+    const now = Date.now();
 
-      target.hp -= tDmg;
-      // We don't take damage here, enemy loop handles enemy attacks
+    let target = newEnemies.find(e => Math.abs(e.x - t.x) <= range);
 
-      if (settings.vfx && particleEngine.current) {
-         particleEngine.current.emit(window.innerWidth/2 + (t.x - 50)*2, window.innerHeight/2, UNIT_TYPES[t.level].color, 'spark', isCrit ? 15 : 5);
+    if (!target && t.x >= (100 - range)) {
+      // Base attack
+      if (now - (t.lastAttack || 0) >= atkCooldown) {
+        t.lastAttack = now;
+        const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
+        let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
+        if (isCrit) tDmg *= 2;
+        eDamageTaken += tDmg;
+
+        // Removed sacrifice at base to allow persistent attack
+        addFloatingText(tDmg, 95, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
+        if (isCrit) doCameraPunch();
+        if (settings.vfx && particleEngine.current) {
+           particleEngine.current.emit(window.innerWidth, window.innerHeight/2, unitDef.color, 'spark', isCrit ? 15 : 5);
+        }
       }
-      if (isCrit) doCameraPunch();
-      playSfx('hit');
-      addFloatingText(tDmg, target.x, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
+    } else if (target) {
+      if (now - (t.lastAttack || 0) >= atkCooldown) {
+        t.lastAttack = now;
+        const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
+        let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
+        if (isCrit) tDmg *= 2;
+
+        target.hp -= tDmg;
+
+        if (settings.vfx && particleEngine.current) {
+           particleEngine.current.emit(window.innerWidth/2 + (t.x - 50)*2, window.innerHeight/2, unitDef.color, 'spark', isCrit ? 15 : 5);
+        }
+        if (isCrit) doCameraPunch();
+        playSfx('hit');
+        addFloatingText(tDmg, target.x, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
+      }
     } else {
       t.x += t.speed * speedMod;
     }
@@ -74,17 +91,30 @@ export const processCombatTick = ({
 
   newEnemies.forEach(e => {
     if (heatDmg) e.hp -= heatDmg;
-    let target = newTroops.find(t => Math.abs(t.x - e.x) < 5);
 
-    if (!target && e.x <= 5) {
-      pDamageTaken += e.dmg;
-      e.hp = 0;
+    const unitDef = UNIT_TYPES[e.level] || {};
+    const range = unitDef.range || 5;
+    const atkCooldown = unitDef.atkCooldown || 1000;
+    const now = Date.now();
+
+    let target = newTroops.find(t => Math.abs(t.x - e.x) <= range);
+
+    if (!target && e.x <= range) {
+      if (now - (e.lastAttack || 0) >= atkCooldown) {
+         e.lastAttack = now;
+         pDamageTaken += e.dmg;
+         // Don't sacrifice enemies on player base either
+      }
     } else if (target) {
-      target.hp -= e.dmg;
+      if (now - (e.lastAttack || 0) >= atkCooldown) {
+         e.lastAttack = now;
+         target.hp -= e.dmg;
+      }
     } else {
       e.x -= e.speed * speedMod;
     }
   });
+
 
   newTroops = newTroops.filter(t => t.hp > 0);
   newEnemies = newEnemies.filter(e => e.hp > 0);
