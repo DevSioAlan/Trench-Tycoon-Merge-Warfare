@@ -1,27 +1,59 @@
 import { memo } from 'react';
 import { UNIT_TYPES } from '../constants';
 
-export const DeckView = memo(({ grid, cooldowns, now, handleDeployIndividual, combatState }) => {
-  // Use the highest 5 levels found in the grid as the "Deck"
-  const getDeck = () => {
-    const validUnits = grid
-      .filter(cell => cell !== null)
-      .map((cell, originalIndex) => ({ ...cell, originalIndex }));
+export const DeckView = memo(({ combatDeck, cooldowns, now, handleDeployIndividual, combatState, setCurrentTab, isStandalone }) => {
+  // If isStandalone, it means we are in the HUB menu looking at our deck
+  // Otherwise, we are in combat.
 
-    // Sort by level descending
-    validUnits.sort((a, b) => b.level - a.level);
+  if (isStandalone) {
+    return (
+      <div className="tab-content fade-in" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', marginBottom: '20px' }}>
+          <button className="confirm-btn" style={{ width: 'auto', background: '#334155' }} onClick={() => setCurrentTab('hub')}>
+            ⬅️ RETOUR
+          </button>
+        </div>
+        <h2 style={{ textAlign: 'center', margin: '0 0 20px 0' }}>VOTRE ÉQUIPE</h2>
+        <p style={{ color: '#94a3b8', fontSize: '12px', textAlign: 'center', marginBottom: '20px' }}>
+          La gestion avancée du deck est en cours de déploiement par le QG.<br/>Les meilleures unités invoquées y sont ajoutées automatiquement.
+        </p>
 
-    // Return top 5 unique highest level units, or if duplicates are fine just top 5
-    return validUnits.slice(0, 5);
-  };
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', width: '100%', maxWidth: '400px' }}>
+          {(combatDeck || Array(6).fill(null)).map((unit, idx) => (
+            <div key={idx} style={{
+              background: '#1e293b', border: '2px solid #334155', borderRadius: '12px',
+              aspectRatio: '3/4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              position: 'relative', overflow: 'hidden'
+            }}>
+              {unit ? (
+                <>
+                  <div className={`aura-glow aura-${unit.level}`}></div>
+                  <div style={{ position: 'absolute', top: 0, left: 0, background: 'rgba(0,0,0,0.8)', padding: '2px 5px', fontSize: '10px', color: 'white', fontWeight: 'bold' }}>Lv.{unit.level}</div>
+                  <div style={{ fontSize: '40px', zIndex: 2 }}>{UNIT_TYPES[unit.level]?.emoji}</div>
+                  <div style={{ position: 'absolute', bottom: 0, width: '100%', textAlign: 'center', background: 'rgba(0,0,0,0.8)', fontSize: '10px', padding: '3px 0' }}>
+                    {UNIT_TYPES[unit.level]?.name}
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: '#475569', fontSize: '30px' }}>+</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
-  const deck = getDeck();
-
+  // Combat Mode Render
   return (
-    <div className="deck-container" style={{ display: 'flex', gap: '8px', padding: '10px', background: '#0f172a', borderRadius: '12px', overflowX: 'auto', border: '1px solid #334155' }}>
-      {deck.map((unit, idx) => {
+    <div className="deck-container" style={{ display: 'flex', gap: '8px', padding: '10px', background: '#0f172a', borderRadius: '12px', overflowX: 'auto', border: '1px solid #334155', justifyContent: 'center' }}>
+      {(combatDeck || Array(6).fill(null)).map((unit, idx) => {
+        if (!unit) {
+           return <div key={idx} style={{ width: '60px', height: '80px', background: '#1e293b', border: '2px dashed #334155', borderRadius: '8px' }}></div>;
+        }
+
         const energyCost = unit.level * 10;
-        const cooldownTime = cooldowns && cooldowns[unit.originalIndex] ? cooldowns[unit.originalIndex] : 0;
+        const cooldownTime = cooldowns && cooldowns[idx] ? cooldowns[idx] : 0;
         const isOnCooldown = cooldownTime > now;
         const cdRemaining = isOnCooldown ? Math.ceil((cooldownTime - now) / 1000) : 0;
         const canAfford = combatState.energy >= energyCost;
@@ -30,7 +62,7 @@ export const DeckView = memo(({ grid, cooldowns, now, handleDeployIndividual, co
         return (
           <div
             key={idx}
-            onClick={() => handleDeployIndividual(unit.originalIndex)}
+            onClick={() => handleDeployIndividual(idx)}
             style={{
               width: '60px', height: '80px', background: '#1e293b', borderRadius: '8px',
               position: 'relative', overflow: 'hidden', cursor: isReady ? 'pointer' : 'not-allowed',
@@ -43,18 +75,13 @@ export const DeckView = memo(({ grid, cooldowns, now, handleDeployIndividual, co
               {energyCost}⚡
             </div>
             <div className={`aura-glow aura-${unit.level}`}></div>
-            <div style={{ fontSize: '30px', zIndex: 2 }}>{UNIT_TYPES[unit.level].emoji}</div>
+            <div style={{ fontSize: '30px', zIndex: 2 }}>{UNIT_TYPES[unit.level]?.emoji}</div>
             <div style={{ position: 'absolute', bottom: 0, width: '100%', background: 'rgba(0,0,0,0.8)', color: 'white', fontSize: '9px', textAlign: 'center', zIndex: 5, padding: '2px 0' }}>
               Lv. {unit.level}
             </div>
           </div>
         );
       })}
-      {deck.length === 0 && (
-        <div style={{ width: '100%', textAlign: 'center', color: '#94a3b8', fontSize: '12px', padding: '20px 0' }}>
-          Invoquez des unités sur le front pour remplir votre Deck !
-        </div>
-      )}
     </div>
   );
 });

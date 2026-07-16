@@ -11,7 +11,7 @@ export const deployUnitAction = (combatState, field, unit, energyCost, prestigeU
     hp: HP_MAP[unit.level] * prestigeUps.dmgMult * (unit.equip === 'medal' ? 1.5 : 1),
     maxHp: HP_MAP[unit.level] * prestigeUps.dmgMult * (unit.equip === 'medal' ? 1.5 : 1),
     dmg: DAMAGE_MAP[unit.level] * (unit.equip === 'medal' ? 1.5 : 1),
-    x: 0, // Starts at player base
+    x: 5, // Starts at player base (extreme left)
     speed: 2 + (lab.speed * 0.5 || 0)
   };
 
@@ -36,17 +36,30 @@ export const processCombatTick = ({
   const heatDmg = weather === 'heat' ? 5 : 0;
   const eventDebuff = waveEvent === 'ambush' ? 0.7 : 1;
 
+  // Sort troops by x ascending, enemies by x descending to process frontlines first
+  newTroops.sort((a, b) => b.x - a.x);
+  newEnemies.sort((a, b) => a.x - b.x);
+
   newTroops.forEach(t => {
     if (heatDmg) { t.hp -= heatDmg; addFloatingText(heatDmg, t.x, 60, 'damage-red', 0.5); }
 
-    let target = newEnemies.find(e => Math.abs(e.x - t.x) < 8);
-    if (target) {
+    let target = newEnemies.find(e => Math.abs(e.x - t.x) < 5); // strict melee range
+    if (!target && t.x >= 95) {
+      // Reached enemy base
       const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
-      let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * (1 + (combatState.combo*0.05)) * eventDebuff * (rageTimer > 0 ? 2 : 1));
+      let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
+      if (isCrit) tDmg *= 2;
+      eDamageTaken += tDmg;
+      t.hp = 0; // Sacrificed at base
+      addFloatingText(tDmg, 95, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
+      if (isCrit) doCameraPunch();
+    } else if (target) {
+      const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
+      let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
       if (isCrit) tDmg *= 2;
 
       target.hp -= tDmg;
-      t.hp -= target.dmg;
+      // We don't take damage here, enemy loop handles enemy attacks
 
       if (settings.vfx && particleEngine.current) {
          particleEngine.current.emit(window.innerWidth/2 + (t.x - 50)*2, window.innerHeight/2, UNIT_TYPES[t.level].color, 'spark', isCrit ? 15 : 5);
@@ -56,16 +69,20 @@ export const processCombatTick = ({
       addFloatingText(tDmg, target.x, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
     } else {
       t.x += t.speed * speedMod;
-      if (t.x >= 100) { eDamageTaken += t.dmg * prestigeUps.dmgMult; t.hp = 0; }
     }
   });
 
   newEnemies.forEach(e => {
     if (heatDmg) e.hp -= heatDmg;
-    let target = newTroops.find(t => Math.abs(t.x - e.x) < 8);
-    if (!target) {
+    let target = newTroops.find(t => Math.abs(t.x - e.x) < 5);
+
+    if (!target && e.x <= 5) {
+      pDamageTaken += e.dmg;
+      e.hp = 0;
+    } else if (target) {
+      target.hp -= e.dmg;
+    } else {
       e.x -= e.speed * speedMod;
-      if (e.x <= 0) { pDamageTaken += e.dmg; e.hp = 0; }
     }
   });
 

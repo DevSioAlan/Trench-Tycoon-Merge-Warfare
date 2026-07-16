@@ -8,7 +8,7 @@ export const useSaveSystem = () => {
   const [wave, setWave] = useState(1);
   const [grid, setGrid] = useState(Array(GRID_SIZE).fill(null));
   const [inventory, setInventory] = useState([]);
-  const [combatDeck, setCombatDeck] = useState(Array(5).fill(null));
+  const [combatDeck, setCombatDeck] = useState(Array(6).fill(null));
   const [buildings, setBuildings] = useState({ hq: 1, refinery: 0, lab: 0 });
   const [lab, setLab] = useState({ goldGen: 1, baseHp: 1, summonCostReduc: 0, speed: 0, crit: 0, autoSummon: 0, autoMerge: 0, infantryDmg: 0, armorHp: 0, advancedEco: 0, orbitalStrike: 0 });
   const [prestige, setPrestige] = useState({ medals: 0, crystals: 0 });
@@ -38,7 +38,7 @@ export const useSaveSystem = () => {
           setWave(p.wave ?? 1);
           setGrid(p.grid ?? Array(GRID_SIZE).fill(null));
           setInventory(p.inventory ?? []);
-          setCombatDeck(p.combatDeck ?? Array(5).fill(null));
+          setCombatDeck(p.combatDeck ?? Array(6).fill(null));
           setBuildings(p.buildings ?? { hq: 1, refinery: 0, lab: 0 });
           setLab({ goldGen: 1, baseHp: 1, summonCostReduc: 0, speed: 0, crit: 0, autoSummon: 0, autoMerge: 0, infantryDmg: 0, armorHp: 0, advancedEco: 0, orbitalStrike: 0, ...(p.lab || {}) });
           setPrestige(p.prestige ?? { medals: 0, crystals: 0 });

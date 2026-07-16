@@ -37,7 +37,7 @@ body { margin: 0; background-color: var(--bg-dark); font-family: system-ui, sans
   100% { background-position: 0% 50%; }
 }
 
-.game-wrapper { position: relative; width: 100%; max-width: 600px; height: 100vh; transition: transform 0.1s ease-out; margin: 0 auto; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+.game-wrapper { position: relative; width: 100%; max-width: 100%; height: 100vh; transition: transform 0.1s ease-out; margin: 0 auto; box-shadow: 0 0 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; }
 .camera-punch { transform: scale(1.03); }
 .vfx-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 9999; }
 .game-container { display: flex; flex-direction: column; width: 100%; height: 100%; background-color: transparent; position: relative; overflow: hidden; }
@@ -404,11 +404,22 @@ body { margin: 0; background-color: var(--bg-dark); font-family: system-ui, sans
 .confirm-btn:disabled { background: #475569; box-shadow: 0 4px 0 #334155; color: #94a3b8; }
 .notification-dot { position: absolute; top: -2px; right: -5px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 5px #ef4444; }
 
-.bottom-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 55px; background: rgba(15, 23, 42, 0.98); border-top: 1px solid #334155; display: flex; justify-content: space-around; align-items: center; z-index: 100; backdrop-filter: blur(10px); }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #64748b; cursor: pointer; transition: color 0.2s; flex: 1; height: 100%; border-top: 2px solid transparent; }
-.nav-item.active { color: #38bdf8; border-top: 2px solid #38bdf8; background: linear-gradient(to top, transparent, rgba(56, 189, 248, 0.15)); }
-.nav-item .nav-icon { font-size: 20px; margin-bottom: 2px; }
-.nav-item span { font-size: 9px; font-weight: 900; text-transform: uppercase; }
+/* Hub Styles */
+.hub-menu { display: flex; flex-direction: column; gap: 15px; padding: 20px; max-width: 400px; margin: 0 auto; height: 100%; justify-content: center; }
+.hub-btn { background: var(--panel-bg); color: white; border: 2px solid #334155; padding: 20px; font-size: 18px; font-weight: bold; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+.hub-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.7); border-color: #3b82f6; }
+.hub-btn .hub-icon { font-size: 28px; }
+.hub-btn-combat { background: linear-gradient(135deg, #ef4444, #991b1b); border-color: #f87171; }
+.hub-btn-combat:hover { border-color: #fca5a5; }
+
+/* Map Styles */
+.map-view { padding: 20px; display: flex; flex-direction: column; align-items: center; height: 100%; overflow-y: auto; }
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; width: 100%; max-width: 800px; margin-top: 20px; }
+.map-level-btn { background: #1e293b; border: 2px solid #334155; border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden; }
+.map-level-btn:hover:not(.locked) { transform: scale(1.05); border-color: #3b82f6; }
+.map-level-btn.locked { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+.map-level-btn.boss { border-color: #ef4444; background: linear-gradient(135deg, #450a0a, #1e293b); }
+.map-level-number { font-size: 20px; font-weight: 900; color: white; text-shadow: 1px 1px 2px #000; }
 
 .upgrades-list, .prestige-tree { display: flex; flex-direction: column; gap: 10px; }
 .upgrade-card { background: var(--panel-bg); border: 1px solid #334155; border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }

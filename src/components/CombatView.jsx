@@ -1,24 +1,34 @@
 import React from 'react';
 import { Battlefield } from './Battlefield';
-import { Grid } from './Grid';
+import { DeckView } from './DeckView';
 
 export const CombatView = ({
   combatState, wave, isRaidBossWave, synergyBuffs, waveEvent, weather, rageTimer, ultiGauge, field, floatingTexts, triggerUltimate, raidTimer, buildings,
-  handleDeployIndividual, selectedSlot, grid, animatingCells, handleCellClick, cooldowns, now
+  handleDeployIndividual, combatDeck, cooldowns, now, setCurrentTab
 }) => {
   return (
-    <div className="tab-content fade-in">
+    <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '10px' }}>
+      <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', marginBottom: '5px' }}>
+        <button className="confirm-btn" style={{ width: 'auto', background: '#334155', padding: '5px 10px', fontSize: '10px' }} onClick={() => setCurrentTab('map')}>
+          ⬅️ FUIR
+        </button>
+      </div>
+
       <Battlefield
         combatState={combatState} wave={wave} isRaidBossWave={isRaidBossWave} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
         weather={weather} rageTimer={rageTimer} ultiGauge={ultiGauge} field={field} floatingTexts={floatingTexts} triggerUltimate={triggerUltimate} raidTimer={raidTimer}
         buildings={buildings}
       />
-      <div className="action-row">
-        <button className="assault-btn" onClick={handleDeployIndividual} disabled={selectedSlot === null || combatState.energy < (grid[selectedSlot]?.level * 10 || 0)}>
-          ⚔️ DÉPLOYER {selectedSlot !== null && grid[selectedSlot] ? `(-${grid[selectedSlot].level * 10}⚡)` : ''}
-        </button>
-      </div>
-      <Grid grid={grid} selectedSlot={selectedSlot} animatingCells={animatingCells} handleCellClick={handleCellClick} cooldowns={cooldowns} now={now} />
+
+      <div style={{ flex: 1 }}></div>
+
+      <DeckView
+        combatDeck={combatDeck}
+        cooldowns={cooldowns}
+        now={now}
+        handleDeployIndividual={handleDeployIndividual}
+        combatState={combatState}
+      />
     </div>
   );
 };
