@@ -23,9 +23,9 @@ export const Battlefield = memo(({
       <div className="battlefield-section">
         <div className="battlefield-texture"></div>
 
-        <div className="ulti-container" onClick={triggerUltimate}>
+        <div className="ulti-container" data-testid="cannon-btn" onClick={triggerUltimate}>
           <div className="ulti-bar" style={{ width: `${ultiGauge}%`, backgroundColor: ultiGauge === 100 ? '#f59e0b' : '#3b82f6' }}></div>
-          <div className="ulti-text">{ultiGauge === 100 ? '🔥 FRAPPE ORBITALE 🔥' : `Artillerie ${Math.floor(ultiGauge)}%`}</div>
+          <div className="ulti-text">{ultiGauge === 100 ? '💥 CANON PRÊT 💥' : `Canon ${Math.floor(ultiGauge)}%`}</div>
         </div>
 
         {weather === 'storm' && <div className="weather-overlay weather-storm"></div>}

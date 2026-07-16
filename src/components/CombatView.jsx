@@ -4,7 +4,7 @@ import { DeckView } from './DeckView';
 
 export const CombatView = ({
   combatState, wave, isRaidBossWave, synergyBuffs, waveEvent, weather, rageTimer, ultiGauge, field, floatingTexts, triggerUltimate, raidTimer, buildings,
-  handleDeployIndividual, combatDeck, cooldowns, now, setCurrentTab
+  handleDeployIndividual, combatDeck, cooldowns, now, setCurrentTab, handleUpgradeEnergy
 }) => {
   return (
     <div className="tab-content fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: '10px' }}>
@@ -27,6 +27,7 @@ export const CombatView = ({
         cooldowns={cooldowns}
         now={now}
         handleDeployIndividual={handleDeployIndividual}
+        handleUpgradeEnergy={handleUpgradeEnergy}
         combatState={combatState}
       />
     </div>
