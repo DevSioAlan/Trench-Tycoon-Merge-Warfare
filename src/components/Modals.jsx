@@ -1,13 +1,49 @@
 import { formatNum } from '../constants';
 
 export const Cinematic = ({ uiState }) => {
-  if (!uiState?.cinematic) return null;
+  if (!uiState?.cinematicSummon?.active || !uiState.cinematicSummon.item) return null;
+  const item = uiState.cinematicSummon.item;
   return (
     <div className="cinematic-overlay">
       <div className="cinematic-content">
         <div className="cine-bg"></div>
-        <img src={uiState.cinematic.img} alt="Unit" className="cine-sprite" />
-        <h1 style={{color: uiState.cinematic.color}}>{uiState.cinematic.name}</h1>
+        <div className="cine-sprite" style={{ fontSize: '150px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {item.emoji}
+        </div>
+        <h1 style={{color: item.color}}>{item.name}</h1>
+      </div>
+    </div>
+  );
+};
+
+export const DropRateModal = ({ uiState, setUiState }) => {
+  if (!uiState?.showDropRates) return null;
+  return (
+    <div className="modal-overlay" onClick={() => setUiState(u => ({...u, showDropRates: false}))}>
+      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+        <h2 style={{ color: '#fbbf24', marginTop: 0 }}>Probabilités (Drop Rates)</h2>
+
+        <h3 style={{ color: '#3b82f6', marginBottom: '5px' }}>Bannière Standard</h3>
+        <div style={{ background: '#0f172a', padding: '10px', borderRadius: '5px', marginBottom: '15px', fontSize: '12px' }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}><span>Commun</span><span>~52.75%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#3b82f6' }}><span>Rare</span><span>35.0%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#a855f7' }}><span>Épique</span><span>10.0%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#eab308' }}><span>Légendaire</span><span>2.0%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ef4444' }}><span>Mythique</span><span>0.2%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#06b6d4' }}><span>Ultra Légendaire</span><span>0.05%</span></div>
+        </div>
+
+        <h3 style={{ color: '#a855f7', marginBottom: '5px' }}>Bannière Épique</h3>
+        <div style={{ background: '#0f172a', padding: '10px', borderRadius: '5px', marginBottom: '15px', fontSize: '12px' }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#3b82f6' }}><span>Rare</span><span>~74.4%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#a855f7' }}><span>Épique</span><span>15.0%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#eab308' }}><span>Légendaire</span><span>4.5%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ef4444' }}><span>Mythique</span><span>0.4%</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#06b6d4', fontWeight: 'bold' }}><span>Ultra Légendaire</span><span>0.1%</span></div>
+        </div>
+
+        <p style={{ fontSize: '10px', color: '#94a3b8' }}>* La Pity garantit l'obtention de la rareté correspondante si atteinte.</p>
+        <button className="confirm-btn" onClick={() => setUiState(u => ({...u, showDropRates: false}))}>Fermer</button>
       </div>
     </div>
   );

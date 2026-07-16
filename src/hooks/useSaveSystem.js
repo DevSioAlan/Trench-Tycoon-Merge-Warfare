@@ -7,15 +7,22 @@ export const useSaveSystem = () => {
   const [res, setRes] = useState({ gold: 150, gems: 0, keys: 0, rp: 0 });
   const [wave, setWave] = useState(1);
   const [grid, setGrid] = useState(Array(GRID_SIZE).fill(null));
-  const [inventory, setInventory] = useState([]);
-  const [combatDeck, setCombatDeck] = useState(Array(6).fill(null));
+
+  // Starter unit: a Level 1 Recruit
+  const defaultStarterUnit = { level: 1, id: 'starter-recruit', equip: null };
+  const [inventory, setInventory] = useState([defaultStarterUnit]);
+
+  // Equip it in the first slot by default
+  const defaultDeck = Array(6).fill(null);
+  defaultDeck[0] = defaultStarterUnit;
+  const [combatDeck, setCombatDeck] = useState(defaultDeck);
   const [buildings, setBuildings] = useState({ hq: 1, refinery: 0, lab: 0 });
   const [lab, setLab] = useState({ goldGen: 1, baseHp: 1, summonCostReduc: 0, speed: 0, crit: 0, autoSummon: 0, autoMerge: 0, infantryDmg: 0, armorHp: 0, advancedEco: 0, orbitalStrike: 0 });
   const [prestige, setPrestige] = useState({ medals: 0, crystals: 0 });
   const [prestigeUps, setPrestigeUps] = useState({ dmgMult: 1, startGold: 0, afkYield: 1 });
   const [relics, setRelics] = useState({ goldBonus: 0, critBonus: 0, dmgBonus: 0 });
   const [combatState, setCombatState] = useState({ playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 0, combo: 0, energyLevel: 1, maxEnergy: 100, energyGen: 5 });
-  const [pity, setPity] = useState(0);
+  const [pity, setPity] = useState({ legendary: 0, mythic: 0, ultra: 0 });
   const [lastDaily, setLastDaily] = useState(0);
 
   const [afkReward, setAfkReward] = useState(null);
@@ -37,15 +44,21 @@ export const useSaveSystem = () => {
           setRes(p.res ?? { gold: 150, gems: 0, keys: 0, rp: 0 });
           setWave(p.wave ?? 1);
           setGrid(p.grid ?? Array(GRID_SIZE).fill(null));
-          setInventory(p.inventory ?? []);
-          setCombatDeck(p.combatDeck ?? Array(6).fill(null));
+          setInventory(p.inventory ?? [defaultStarterUnit]);
+          setCombatDeck(p.combatDeck ?? defaultDeck);
           setBuildings(p.buildings ?? { hq: 1, refinery: 0, lab: 0 });
           setLab({ goldGen: 1, baseHp: 1, summonCostReduc: 0, speed: 0, crit: 0, autoSummon: 0, autoMerge: 0, infantryDmg: 0, armorHp: 0, advancedEco: 0, orbitalStrike: 0, ...(p.lab || {}) });
           setPrestige(p.prestige ?? { medals: 0, crystals: 0 });
           setPrestigeUps(p.prestigeUps ?? { dmgMult: 1, startGold: 0, afkYield: 1 });
           setRelics(p.relics ?? { goldBonus: 0, critBonus: 0, dmgBonus: 0 });
           setCombatState(p.combatState ?? { playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 0, combo: 0, energyLevel: 1, maxEnergy: 100, energyGen: 5 });
-          setPity(p.pity ?? 0);
+
+          let parsedPity = p.pity;
+          if (typeof parsedPity === 'number') {
+            parsedPity = { legendary: parsedPity, mythic: 0, ultra: 0 };
+          }
+          setPity(parsedPity ?? { legendary: 0, mythic: 0, ultra: 0 });
+
           setLastDaily(p.lastDaily ?? 0);
 
           if (p.lastLogin) {
