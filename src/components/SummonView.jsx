@@ -60,7 +60,7 @@ export const SummonView = ({ activeBanner, setActiveBanner, performSummon, res, 
             <div className="btn-cost" style={{ fontSize: '12px', marginTop: '5px' }}>{activeBanner === 'premium' ? `💎 ${baseCost}` : `💰 ${formatNum(baseCost)}`}</div>
           </button>
 
-          <button className="summon-btn" onClick={() => performSummon(10)} disabled={(activeBanner === 'premium' ? res.gems < baseCost * 10 : res.gold < baseCost * 10)} style={{ flex: 1, padding: '15px', fontSize: '16px', fontWeight: 'bold', background: 'linear-gradient(135deg, #a855f7, #7e22ce)', box-shadow: '0 4px 0 #4c1d95' }}>
+          <button className="summon-btn" onClick={() => performSummon(10)} disabled={(activeBanner === 'premium' ? res.gems < baseCost * 10 : res.gold < baseCost * 10)} style={{ flex: 1, padding: '15px', fontSize: '16px', fontWeight: 'bold', background: 'linear-gradient(135deg, #a855f7, #7e22ce)', boxShadow: '0 4px 0 #4c1d95' }}>
             <span className="btn-title">10x INVOCATION</span>
             <div className="btn-cost" style={{ fontSize: '12px', marginTop: '5px' }}>{activeBanner === 'premium' ? `💎 ${baseCost * 10}` : `💰 ${formatNum(baseCost * 10)}`}</div>
           </button>
