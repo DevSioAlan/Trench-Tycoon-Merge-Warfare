@@ -25,13 +25,14 @@ export const deployUnitAction = (combatState, field, unit, energyCost, prestigeU
 export const processCombatTick = ({
   currentField, weather, waveEvent, lab, relics, prestigeUps, synergyBuffs, combatState, rageTimer,
   settings, particleEngine, addFloatingText, playSfx, triggerShake, doCameraPunch,
-  wave, isRaidBossWave, handleGameOver
+  wave, isRaidBossWave, handleGameOver, combatMode
 }) => {
   let newTroops = currentField.troops.map(t => ({...t}));
   let newEnemies = currentField.enemies.map(e => ({...e}));
   let pDamageTaken = 0;
   let eDamageTaken = 0;
   let nextCombatState = { ...combatState };
+  let statsUpdates = { enemiesDefeated: 0, battlesWon: 0 };
 
   const speedMod = weather === 'snow' ? 0.6 : 1;
   const heatDmg = weather === 'heat' ? 5 : 0;
@@ -117,7 +118,10 @@ export const processCombatTick = ({
 
 
   newTroops = newTroops.filter(t => t.hp > 0);
-  newEnemies = newEnemies.filter(e => e.hp > 0);
+  newEnemies = newEnemies.filter(e => {
+    if (e.hp <= 0) statsUpdates.enemiesDefeated += 1;
+    return e.hp > 0;
+  });
 
   if (pDamageTaken > 0) {
     const newHp = Math.max(0, nextCombatState.playerHp - pDamageTaken);
@@ -132,6 +136,7 @@ export const processCombatTick = ({
   if (eDamageTaken > 0) {
     const newHp = Math.max(0, nextCombatState.enemyHp - eDamageTaken);
     if (newHp === 0 && nextCombatState.enemyHp > 0) {
+      statsUpdates.battlesWon += 1;
       resultReward = {
         gold: isRaidBossWave ? 2000 * wave : 200 * wave,
         keys: Math.random() < 0.1 ? 1 : 0,
@@ -143,5 +148,5 @@ export const processCombatTick = ({
     triggerShake('base-shake');
   }
 
-  return { troops: newTroops, enemies: newEnemies, newCombatState: nextCombatState, reward: resultReward };
+  return { troops: newTroops, enemies: newEnemies, newCombatState: nextCombatState, reward: resultReward, statsUpdates };
 };

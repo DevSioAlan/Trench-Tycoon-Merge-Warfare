@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { SAVE_KEY, GRID_SIZE } from '../constants';
 
 export const useSaveSystem = () => {
-  const [profile, setProfile] = useState({ name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue' });
+  const [profile, setProfile] = useState({ name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue', unlockedTitles: ['Recrue'] });
+  const [stats, setStats] = useState({ enemiesDefeated: 0, battlesWon: 0, unitsUnlocked: 1, highScoreSurvie: 0 });
+  const [quests, setQuests] = useState({ daily: { played: 0, summoned: 0, energyUpgraded: 0 }, claimed: { played: false, summoned: false, energyUpgraded: false }, achievements: { firstMythic: false, thousandKills: false } });
+  const [guild, setGuild] = useState({ id: null, name: '', joinedAt: null, lastCheckIn: 0, buffType: 'none', highscore: 0 });
   const [settings, setSettings] = useState({ vfx: true, sfx: true, bgm: false, colorblind: false, autoBattle: false, theme: 'standard' });
   const [res, setRes] = useState({ gold: 150, gems: 0, keys: 0, rp: 0 });
   const [wave, setWave] = useState(1);
@@ -30,8 +33,8 @@ export const useSaveSystem = () => {
   const stateRef = useRef({});
 
   useEffect(() => {
-    stateRef.current = { profile, settings, res, wave, grid, inventory, combatDeck, buildings, lab, prestige, prestigeUps, relics, combatState, pity, lastDaily };
-  }, [profile, settings, res, wave, grid, inventory, combatDeck, buildings, lab, prestige, prestigeUps, relics, combatState, pity, lastDaily]);
+    stateRef.current = { profile, settings, res, wave, grid, inventory, combatDeck, buildings, lab, prestige, prestigeUps, relics, combatState, pity, lastDaily, stats, quests, guild };
+  }, [profile, settings, res, wave, grid, inventory, combatDeck, buildings, lab, prestige, prestigeUps, relics, combatState, pity, lastDaily, stats, quests, guild]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -39,9 +42,12 @@ export const useSaveSystem = () => {
       if (saved) {
         try {
           const p = JSON.parse(saved);
-          setProfile(p.profile ?? { name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue' });
+          setProfile(p.profile ?? { name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue', unlockedTitles: ['Recrue'] });
+          setStats(p.stats ?? { enemiesDefeated: 0, battlesWon: 0, unitsUnlocked: 1, highScoreSurvie: 0 });
+          setQuests(p.quests ?? { daily: { played: 0, summoned: 0, energyUpgraded: 0 }, claimed: { played: false, summoned: false, energyUpgraded: false }, achievements: { firstMythic: false, thousandKills: false } });
+          setGuild(p.guild ?? { id: null, name: '', joinedAt: null, lastCheckIn: 0, buffType: 'none', highscore: 0 });
           setSettings(p.settings ?? { vfx: true, sfx: true, bgm: false, colorblind: false, autoBattle: false, theme: 'standard' });
-          setRes(p.res ?? { gold: 150, gems: 0, keys: 0, rp: 0 });
+          setRes(p.res ?? { gold: 150, gems: 0, keys: 0, rp: 0, warMedals: 0 });
           setWave(p.wave ?? 1);
           setGrid(p.grid ?? Array(GRID_SIZE).fill(null));
           setInventory(p.inventory ?? [defaultStarterUnit]);
@@ -93,6 +99,9 @@ export const useSaveSystem = () => {
     pity, setPity,
     lastDaily, setLastDaily,
     afkReward, setAfkReward,
-    stateRef
+    stateRef,
+    stats, setStats,
+    quests, setQuests,
+    guild, setGuild
   };
 };

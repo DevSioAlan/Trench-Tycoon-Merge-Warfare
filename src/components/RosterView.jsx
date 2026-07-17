@@ -54,7 +54,7 @@ export const RosterView = ({ inventory = [], combatDeck = [], setCombatDeck, set
     <div className="tab-content fade-in" style={{ padding: '15px', display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
       <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', marginBottom: '10px' }}>
         <button className="confirm-btn" style={{ width: 'auto', background: '#334155' }} onClick={() => setCurrentTab('hub')}>
-          ⬅️ RETOUR
+          RETOUR
         </button>
       </div>
       <h2 style={{ textAlign: 'center', margin: '0 0 10px 0', color: '#fbbf24', marginTop: 0 }}>⚓ ÉQUIPE</h2>

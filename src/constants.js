@@ -12,6 +12,7 @@ export const UNIT_TYPES = {
   6: { name: 'Titan', emoji: '👹', color: '#06b6d4', rarity: 'Ultra Légendaire', rate: 0.1, cost: 1200, hp: 3000, damage: 400, speed: 0.7, range: 10, atkCooldown: 3000, deployCooldown: 20000 },
   7: { name: 'Éveillé', emoji: '👽', color: '#f472b6', rarity: 'Commun', rate: 0, cost: 2500, hp: 6000, damage: 1000, speed: 1.5, range: 20, atkCooldown: 2000, deployCooldown: 30000 },
   8: { name: 'Dieu de Guerre', emoji: '👿', color: '#fde047', rarity: 'Commun', rate: 0, cost: 5000, hp: 15000, damage: 3000, speed: 1.0, range: 10, atkCooldown: 1500, deployCooldown: 40000 },
+  10: { name: "Champion de l'Arène", emoji: '👑', color: '#06b6d4', rarity: 'Ultra Légendaire', rate: 0, cost: 2000, hp: 8000, damage: 1500, speed: 1.5, range: 8, atkCooldown: 1200, deployCooldown: 25000 },
   9: { name: 'Transfiguration Flower', emoji: '🌸', color: '#fde047', rarity: 'Commun', rate: 0, cost: 4000, hp: 500, damage: 5000, speed: 0.5, range: 40, atkCooldown: 6000, deployCooldown: 35000 }
 };
 

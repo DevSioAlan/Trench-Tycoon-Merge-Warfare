@@ -8,7 +8,7 @@ export const useGameLoop = ({
   triggerAnim, playSfx, addFloatingText, particleEngine, doCameraPunch, triggerShake, maxPlayerHp, handleGameOver,
   setWave, setRaidTimer, setUltiGauge
 }) => {
-  const { buildings, lab, relics, waveEvent, wave, isRaidBossWave, field, rageTimer, settings, grid, combatState, prestigeUps, synergyBuffs } = state;
+  const { buildings, lab, relics, waveEvent, wave, isRaidBossWave, field, rageTimer, settings, grid, combatState, prestigeUps, synergyBuffs, combatMode, setUiState } = state;
   const { stateRef } = state;
   const combatTimeRef = useRef(0);
 
@@ -25,11 +25,12 @@ export const useGameLoop = ({
   useEffect(() => {
     if (!isLoaded || !gameStarted) return;
     const ecoTimer = setInterval(() => {
-      const goldGain = (2 + buildings.refinery * 2 + lab.goldGen) * (1 + relics.goldBonus) * (waveEvent === 'supply' ? 2 : 1);
+      const guildBuff = state.guild?.buffType;
+      const goldGain = (2 + buildings.refinery * 2 + lab.goldGen) * (1 + relics.goldBonus) * (waveEvent === 'supply' ? 2 : 1) * (guildBuff === 'gold' ? 1.1 : 1);
       setRes(r => ({ ...r, gold: r.gold + goldGain, rp: r.rp + (buildings.lab > 0 ? buildings.lab : 0) }));
 
       setCombatState(c => {
-         const gen = c.energyGen || 5;
+         const gen = (c.energyGen || 5) * (guildBuff === 'energy' ? 1.1 : 1);
          const max = c.maxEnergy || 100;
          return { ...c, energy: Math.min(max, c.energy + gen), combo: Math.max(0, c.combo - 1) };
       });
@@ -39,6 +40,15 @@ export const useGameLoop = ({
 
       if (currentTab === 'combat') {
         combatTimeRef.current += 1;
+        if (combatMode === 'clanWar') {
+          setRaidTimer(rt => {
+             if (rt <= 1) {
+                 handleGameOver('clanWar');
+                 return 0;
+             }
+             return rt - 1;
+          });
+        }
 
         // Cannon logic
         setUltiGauge(u => Math.min(100, u + 2)); // Takes 50s to charge
@@ -48,7 +58,19 @@ export const useGameLoop = ({
         setField(f => {
           let newEnemies = [...f.enemies];
 
-          if (wave === 1) {
+          if (combatMode === 'clanWar') {
+            if (f.enemies.length === 0) {
+              newEnemies.push({ id: Date.now()+Math.random(), level: 8, hp: 999999999, maxHp: 999999999, dmg: 500, x: 95, isBoss: true, speed: 0 });
+            }
+          } else if (combatMode === 'survival') {
+            if (f.enemies.length < 5 && t % 3 === 0) {
+              const eLvl = Math.max(1, Math.min(8, Math.floor(wave / 5) + 1));
+              const hp = HP_MAP[eLvl] * Math.pow(1.2, wave);
+              const dmg = DAMAGE_MAP[eLvl] * Math.pow(1.2, wave);
+              newEnemies.push({ id: Date.now()+Math.random(), level: eLvl, hp, maxHp: hp, dmg, x: 95, isBoss: false, speed: UNIT_TYPES[eLvl]?.speed || 1.5 });
+            }
+            if (f.enemies.length === 0 && t > 5) setWave(w => w + 1);
+          } else if (wave === 1) {
             // Script Niveau 1
             if (t % 5 === 0 && t < 40) {
               const hp = HP_MAP[1];
@@ -102,11 +124,27 @@ export const useGameLoop = ({
     if (!gameStarted || currentTab !== 'combat') return;
     const combatTick = setInterval(() => {
       setField(currentField => {
-        const { troops, enemies, newCombatState, reward } = processCombatTick({
+        const { troops, enemies, newCombatState, reward, statsUpdates } = processCombatTick({
           currentField, weather: state.weather, waveEvent, lab, relics, prestigeUps, synergyBuffs,
           combatState, rageTimer, settings, particleEngine, addFloatingText, playSfx, triggerShake, doCameraPunch,
-          wave, isRaidBossWave, handleGameOver
+          wave, isRaidBossWave, handleGameOver, combatMode
         });
+
+        if (statsUpdates?.enemiesDefeated || statsUpdates?.battlesWon) {
+           state.setStats?.(s => {
+             const newDefeated = s.enemiesDefeated + (statsUpdates.enemiesDefeated || 0);
+             if (newDefeated >= 1000) {
+                 state.setQuests?.(q => ({...q, achievements: {...q.achievements, thousandKills: true}}));
+             }
+             return {
+             ...s,
+             enemiesDefeated: newDefeated,
+             battlesWon: s.battlesWon + (statsUpdates.battlesWon || 0)
+           };});
+           if (statsUpdates.battlesWon) {
+              state.setQuests?.(q => ({...q, daily: {...q.daily, played: q.daily.played + 1}}));
+           }
+        }
 
         if (reward) {
           setTimeout(() => {
@@ -120,7 +158,7 @@ export const useGameLoop = ({
                addFloatingText('RELIQUE TROUVÉE !', 50, 20, 'damage-crit');
             }
 
-            setWave(w => w + 1); setRaidTimer(30); combatTimeRef.current = 0; setUltiGauge(0);
+            if (combatMode === 'campaign') { setWave(w => w + 1); setRaidTimer(30); combatTimeRef.current = 0; setUltiGauge(0); }
             setField({ troops: [], enemies: [] });
             setCombatState(c => {
               const scale = ((wave + 1) % 10 === 0) ? 5 : 1.25;

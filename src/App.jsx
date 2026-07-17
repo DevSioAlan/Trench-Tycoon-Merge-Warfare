@@ -9,13 +9,18 @@ import { GRID_SIZE, DAMAGE_MAP, HP_MAP, UNIT_TYPES, formatNum, BETA_FEATURES, SA
 import { HUD } from './components/HUD';
 import { Battlefield } from './components/Battlefield';
 import { StartScreen } from './components/StartScreen';
-import { Cinematic, ProfileModal, AFKModal, DropRateModal } from './components/Modals';
+import { Cinematic, AFKModal, DropRateModal } from './components/Modals';
 import { deployUnitAction } from './engine/combatEngine';
 import { SummonView } from './components/SummonView';
 import { DeckView } from './components/DeckView';
 import { useGacha } from './hooks/useGacha';
 import { CombatView } from './components/CombatView';
+import { ProfileView } from './components/ProfileView';
+import { QuestView } from './components/QuestView';
+import { GuildView } from './components/GuildView';
 import { RosterView } from './components/RosterView';
+import { RankedView } from './components/RankedView';
+import { WarShopView } from './components/WarShopView';
 import { HubView } from './components/HubView';
 import { MapView } from './components/MapView';
 
@@ -25,7 +30,7 @@ function GameContent() {
   const [currentTab, setCurrentTab] = useState('hub');
 
   const state = useSaveSystem();
-  const { profile, setProfile, settings, setSettings, res, setRes, wave, setWave, combatDeck, setCombatDeck, inventory, setInventory, buildings, setBuildings, lab, setLab, prestige, setPrestige, prestigeUps, setPrestigeUps, relics, combatState, setCombatState, pity, setPity, lastDaily, setLastDaily, afkReward, setAfkReward } = state;
+  const { profile, setProfile, settings, setSettings, res, setRes, wave, setWave, combatDeck, setCombatDeck, inventory, setInventory, buildings, setBuildings, lab, setLab, prestige, setPrestige, prestigeUps, setPrestigeUps, relics, combatState, setCombatState, pity, setPity, lastDaily, setLastDaily, afkReward, setAfkReward, stats, quests, setQuests, guild, setGuild } = state;
 
   const [field, setField] = useState({ troops: [], enemies: [] });
   const [ultiGauge, setUltiGauge] = useState(0);
@@ -34,7 +39,7 @@ function GameContent() {
   const [weather, setWeather] = useState('clear');
   const [waveEvent, setWaveEvent] = useState(null);
 
-  const [uiState, setUiState] = useState({ showProfile: false, showDaily: false, cinematicSummon: null, showDropRates: false });
+  const [uiState, setUiState] = useState({ showProfile: false, showDaily: false, cinematicSummon: null, showDropRates: false, combatMode: 'campaign' });
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [animatingCells, setAnimatingCells] = useState({});
   const [cooldowns, setCooldowns] = useState({});
@@ -245,7 +250,7 @@ function GameContent() {
     <div className={`game-wrapper theme-${settings?.theme || 'standard'} ${settings?.colorblind ? 'colorblind-mode' : ''} ${cameraPunch ? 'camera-punch' : ''}`}>
       <canvas ref={canvasRef} className="vfx-canvas" />
       <Cinematic uiState={uiState} />
-      <ProfileModal uiState={uiState} setUiState={setUiState} profile={profile} setProfile={setProfile} wave={wave} />
+
       <AFKModal afkReward={afkReward} setAfkReward={setAfkReward} />
       <DropRateModal uiState={uiState} setUiState={setUiState} />
 
@@ -263,14 +268,32 @@ function GameContent() {
         {artilleryFlash && <div className="artillery-flash"></div>}
         {screenShake && <div className={`shake-overlay ${screenShake}`}></div>}
 
-        <HUD profile={profile} res={res} setUiState={setUiState} />
+        <HUD profile={profile} res={res} setCurrentTab={setCurrentTab} />
 
         {currentTab === 'hub' && <HubView setCurrentTab={setCurrentTab} />}
-        {currentTab === 'map' && <MapView maxWave={wave} setCurrentTab={setCurrentTab} onSelectLevel={(l) => { setWave(l); setCurrentTab('combat'); setField({troops:[], enemies:[]}); }} />}
+        {currentTab === 'ranked' && (
+          <RankedView stats={stats} setCurrentTab={setCurrentTab} setWave={setWave} setField={setField} setCombatState={setCombatState} setRaidTimer={setRaidTimer} setIsRaidBossWave={setIsRaidBossWave} setMode={(m) => setUiState(prev => ({...prev, combatMode: m}))} />
+        )}
+
+        {currentTab === 'warShop' && (
+          <WarShopView res={res} setRes={setRes} inventory={inventory} setInventory={setInventory} setCurrentTab={setCurrentTab} addToast={(msg, color) => setUiState(prev => ({ ...prev, toasts: [...(prev.toasts || []), { id: Date.now(), msg, color }] }))} />
+        )}
+
+        {currentTab === 'map' && <MapView maxWave={wave} setCurrentTab={setCurrentTab} onSelectLevel={(l) => { setWave(l); setCurrentTab('combat'); setField({troops:[], enemies:[]}); setUiState(prev => ({...prev, combatMode: 'campaign'})); }} />}
+
+        {currentTab === 'clanWar' && (
+          <CombatView
+            combatState={combatState} wave={wave} isRaidBossWave={true} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
+            weather={weather} rageTimer={rageTimer} ultiGauge={ultiGauge} field={field} floatingTexts={floatingTexts} triggerUltimate={triggerUltimate} raidTimer={raidTimer}
+            buildings={buildings} combatDeck={combatDeck} setCurrentTab={setCurrentTab}
+            handleDeployIndividual={handleDeployIndividual} cooldowns={cooldowns} now={now} handleUpgradeEnergy={handleUpgradeEnergy}
+            combatMode={'clanWar'}
+          />
+        )}
 
         {currentTab === 'combat' && (
           <CombatView
-            combatState={combatState} wave={wave} isRaidBossWave={isRaidBossWave} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
+            combatState={combatState} wave={wave} isRaidBossWave={isRaidBossWave} combatMode={uiState.combatMode} synergyBuffs={synergyBuffs} waveEvent={waveEvent}
             weather={weather} rageTimer={rageTimer} ultiGauge={ultiGauge} field={field} floatingTexts={floatingTexts} triggerUltimate={triggerUltimate} raidTimer={raidTimer}
             buildings={buildings} combatDeck={combatDeck} setCurrentTab={setCurrentTab}
             handleDeployIndividual={handleDeployIndividual} cooldowns={cooldowns} now={now} handleUpgradeEnergy={handleUpgradeEnergy}
@@ -285,16 +308,18 @@ function GameContent() {
           <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} pity={pity} setCurrentTab={setCurrentTab} setUiState={setUiState} />
         )}
 
+
+
+        {currentTab === 'profile' && (
+          <ProfileView profile={profile} setProfile={setProfile} stats={stats} inventory={inventory} setCurrentTab={setCurrentTab} />
+        )}
+
         {currentTab === 'quests' && (
-          <div className="tab-content fade-in" style={{ padding: '20px' }}>
-             <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', marginBottom: '20px' }}>
-              <button className="confirm-btn" style={{ width: 'auto', background: '#334155' }} onClick={() => setCurrentTab('hub')}>
-                ⬅️ RETOUR
-              </button>
-            </div>
-            <h2 style={{ textAlign: 'center' }}>QUÊTES & SUCCÈS</h2>
-            <p style={{ textAlign: 'center', color: '#94a3b8' }}>En développement...</p>
-          </div>
+          <QuestView quests={quests} setQuests={setQuests} res={res} setRes={setRes} profile={profile} setProfile={setProfile} setCurrentTab={setCurrentTab} />
+        )}
+
+        {currentTab === 'guild' && (
+          <GuildView guild={guild} setGuild={setGuild} res={res} setRes={setRes} setCurrentTab={setCurrentTab} />
         )}
 
         {currentTab === 'settings' && (

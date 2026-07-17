@@ -8,7 +8,7 @@ export const SummonView = ({ activeBanner, setActiveBanner, performSummon, res, 
     <div className="action-row fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '15px', height: '100%', overflowY: 'auto' }}>
       <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', marginBottom: '10px' }}>
         <button className="confirm-btn" style={{ width: 'auto', background: '#334155' }} onClick={() => setCurrentTab('hub')}>
-          ⬅️ RETOUR
+          RETOUR
         </button>
         <button className="confirm-btn" style={{ width: 'auto', background: '#0f172a', border: '1px solid #38bdf8', color: '#38bdf8' }} onClick={() => setUiState(prev => ({...prev, showDropRates: true}))}>
           📊 Voir Probabilités
@@ -60,7 +60,7 @@ export const SummonView = ({ activeBanner, setActiveBanner, performSummon, res, 
             <div className="btn-cost" style={{ fontSize: '12px', marginTop: '5px' }}>{activeBanner === 'premium' ? `💎 ${baseCost}` : `💰 ${formatNum(baseCost)}`}</div>
           </button>
 
-          <button className="summon-btn" onClick={() => performSummon(10)} disabled={(activeBanner === 'premium' ? res.gems < baseCost * 10 : res.gold < baseCost * 10)} style={{ flex: 1, padding: '15px', fontSize: '16px', fontWeight: 'bold', background: 'linear-gradient(135deg, #a855f7, #7e22ce)', box-shadow: '0 4px 0 #4c1d95' }}>
+          <button className="summon-btn" onClick={() => performSummon(10)} disabled={(activeBanner === 'premium' ? res.gems < baseCost * 10 : res.gold < baseCost * 10)} style={{ flex: 1, padding: '15px', fontSize: '16px', fontWeight: 'bold', background: 'linear-gradient(135deg, #a855f7, #7e22ce)', boxShadow: '0 4px 0 #4c1d95' }}>
             <span className="btn-title">10x INVOCATION</span>
             <div className="btn-cost" style={{ fontSize: '12px', marginTop: '5px' }}>{activeBanner === 'premium' ? `💎 ${baseCost * 10}` : `💰 ${formatNum(baseCost * 10)}`}</div>
           </button>
