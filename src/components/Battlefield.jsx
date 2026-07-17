@@ -50,16 +50,18 @@ export const Battlefield = memo(({
 
           {field?.troops?.map(t => (
             <div key={t.id} className={`field-entity entity-troop ${t.isAttacking ? 'shake-anim' : ''}`} style={{ left: `${t.x}%`, zIndex: Math.floor(t.x) }}>
+              <div className={`battlefield-aura aura-${t.level}`}></div>
               <div className="entity-level">Nv.{t.level}</div>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(t.hp/t.maxHp)*100}%`}}></div></div>
-              <span className="unit-emoji" style={{ fontSize: '35px', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))' }}>{UNIT_TYPES[t.level]?.emoji}</span>
+              <span className="unit-emoji" style={{ fontSize: '35px', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))', zIndex: 2 }}>{UNIT_TYPES[t.level]?.emoji}</span>
             </div>
           ))}
           {field?.enemies?.map(e => (
             <div key={e.id} className={`field-entity entity-enemy ${e.isBoss ? 'is-boss' : ''} ${e.isAttacking ? 'shake-anim' : ''}`} style={{ left: `${e.x}%`, zIndex: Math.floor(100 - e.x) }}>
+              <div className={`battlefield-aura aura-${e.level}`}></div>
               <div className="entity-level">Nv.{e.level}</div>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(e.hp/e.maxHp)*100}%`}}></div></div>
-              <span className="unit-emoji" style={{ fontSize: e.isBoss ? '60px' : '35px', transform: 'scaleX(-1)', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))' }}>{UNIT_TYPES[e.level]?.emoji}</span>
+              <span className="unit-emoji" style={{ fontSize: e.isBoss ? '60px' : '35px', transform: 'scaleX(-1)', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))', zIndex: 2 }}>{UNIT_TYPES[e.level]?.emoji}</span>
             </div>
           ))}
           {floatingTexts?.map(ft => (
