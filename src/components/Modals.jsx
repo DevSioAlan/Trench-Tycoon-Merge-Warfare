@@ -63,6 +63,11 @@ export const ProfileModal = ({ uiState, setUiState, profile, setProfile, wave })
             <span style={{color: '#94a3b8', fontSize: '10px'}}>Vague Max: {wave}</span>
           </div>
         </div>
+        <div style={{ background: '#0f172a', padding: '10px', borderRadius: '5px', marginBottom: '15px', fontSize: '12px' }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}><span>Unités Tuées</span><span>{formatNum(profile?.stats?.unitsKilled || 0)}</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}><span>Invocations Réalisées</span><span>{formatNum(profile?.stats?.summons || 0)}</span></div>
+           <div style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}><span>Dégâts Infligés</span><span>{formatNum(profile?.stats?.damageDealt || 0)}</span></div>
+        </div>
         <input type="text" value={profile?.name ?? ''} onChange={e => setProfile(p => ({...p, name: e.target.value}))} placeholder="Nom de code" className="input-field" />
         <div style={{display: 'flex', gap: '5px', margin: '10px 0', justifyContent:'center'}}>
           {['default', 'gold', 'neon', 'flame'].map(f => (

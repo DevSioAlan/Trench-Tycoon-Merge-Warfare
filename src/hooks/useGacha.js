@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { UNIT_TYPES } from '../constants';
 
-export const useGacha = ({ res, setRes, setInventory, setPity, setCinematicSummon, addToast, summonCost }) => {
+export const useGacha = ({ res, setRes, setInventory, setPity, setCinematicSummon, addToast, summonCost, setProfile }) => {
   const [activeBanner, setActiveBanner] = useState('standard');
 
   const getSummonResult = (banner) => {
@@ -73,6 +73,14 @@ export const useGacha = ({ res, setRes, setInventory, setPity, setCinematicSummo
       });
 
       setInventory(prev => [...prev, ...newUnits]);
+
+      setProfile(p => ({
+        ...p,
+        stats: {
+          ...p.stats,
+          summons: (p.stats?.summons || 0) + amount
+        }
+      }));
 
       if (maxLevelPulled >= 4) {
         setCinematicSummon({ active: true, item: { ...UNIT_TYPES[maxLevelPulled] } });

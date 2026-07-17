@@ -121,7 +121,7 @@ function GameContent() {
     setTimeout(() => setUiState(prev => ({ ...prev, toasts: (prev.toasts || []).filter(t => t.id !== id) })), 3000);
   }, [setUiState]);
 
-  const { activeBanner, setActiveBanner, performSummon } = useGacha({ res, setRes, setInventory, setPity, setCinematicSummon: (sum) => setUiState(prev => ({ ...prev, cinematicSummon: sum })), addToast, summonCost });
+  const { activeBanner, setActiveBanner, performSummon } = useGacha({ res, setRes, setInventory, setPity, setCinematicSummon: (sum) => setUiState(prev => ({ ...prev, cinematicSummon: sum })), addToast, summonCost, setProfile });
 
   const doCameraPunch = useCallback(() => {
     if (!settings.vfx) return;
@@ -182,7 +182,7 @@ function GameContent() {
     if (targetIndex === null || !combatDeck[targetIndex]) return;
 
     // Check cooldown
-    if (cooldowns[targetIndex] && now < cooldowns[targetIndex]) {
+    if (cooldowns[targetIndex] && Date.now() < cooldowns[targetIndex]) {
       return addFloatingText("En recharge", 50, 80, 'damage-red');
     }
 
@@ -246,6 +246,10 @@ function GameContent() {
   const isHpCritical = combatState.playerHp / maxPlayerHp < 0.3;
 
   return (
+    <>
+    <div className="landscape-overlay">
+       Veuillez tourner votre téléphone en mode paysage
+    </div>
     <div className={`game-wrapper theme-${settings?.theme || 'standard'} ${settings?.colorblind ? 'colorblind-mode' : ''} ${cameraPunch ? 'camera-punch' : ''}`}>
       <canvas ref={canvasRef} className="vfx-canvas" />
       <Cinematic uiState={uiState} />
@@ -333,6 +337,7 @@ function GameContent() {
 
       </div>
     </div>
+    </>
   );
 }
 

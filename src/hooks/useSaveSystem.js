@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { SAVE_KEY, GRID_SIZE } from '../constants';
 
 export const useSaveSystem = () => {
-  const [profile, setProfile] = useState({ name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue' });
+  const [profile, setProfile] = useState({ name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue', stats: { unitsKilled: 0, summons: 0, damageDealt: 0 } });
   const [settings, setSettings] = useState({ vfx: true, sfx: true, bgm: false, colorblind: false, autoBattle: false, theme: 'standard' });
   const [res, setRes] = useState({ gold: 150, gems: 0, keys: 0, rp: 0 });
   const [wave, setWave] = useState(1);
@@ -21,7 +21,7 @@ export const useSaveSystem = () => {
   const [prestige, setPrestige] = useState({ medals: 0, crystals: 0 });
   const [prestigeUps, setPrestigeUps] = useState({ dmgMult: 1, startGold: 0, afkYield: 1 });
   const [relics, setRelics] = useState({ goldBonus: 0, critBonus: 0, dmgBonus: 0 });
-  const [combatState, setCombatState] = useState({ playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 0, combo: 0, energyLevel: 1, maxEnergy: 100, energyGen: 5 });
+  const [combatState, setCombatState] = useState({ playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 0, combo: 0, energyLevel: 1, maxEnergy: 1000, energyGen: 5 });
   const [pity, setPity] = useState({ legendary: 0, mythic: 0, ultra: 0 });
   const [lastDaily, setLastDaily] = useState(0);
 
@@ -39,7 +39,7 @@ export const useSaveSystem = () => {
       if (saved) {
         try {
           const p = JSON.parse(saved);
-          setProfile(p.profile ?? { name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue' });
+          setProfile(p.profile ?? { name: 'Commandant', avatar: '🪖', frame: 'default', title: 'Recrue', stats: { unitsKilled: 0, summons: 0, damageDealt: 0 } });
           setSettings(p.settings ?? { vfx: true, sfx: true, bgm: false, colorblind: false, autoBattle: false, theme: 'standard' });
           setRes(p.res ?? { gold: 150, gems: 0, keys: 0, rp: 0 });
           setWave(p.wave ?? 1);
@@ -51,7 +51,7 @@ export const useSaveSystem = () => {
           setPrestige(p.prestige ?? { medals: 0, crystals: 0 });
           setPrestigeUps(p.prestigeUps ?? { dmgMult: 1, startGold: 0, afkYield: 1 });
           setRelics(p.relics ?? { goldBonus: 0, critBonus: 0, dmgBonus: 0 });
-          setCombatState(p.combatState ?? { playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 0, combo: 0, energyLevel: 1, maxEnergy: 100, energyGen: 5 });
+          setCombatState(p.combatState ?? { playerHp: 500, enemyMaxHp: 100, enemyHp: 100, energy: 0, combo: 0, energyLevel: 1, maxEnergy: 1000, energyGen: 5 });
 
           let parsedPity = p.pity;
           if (typeof parsedPity === 'number') {
