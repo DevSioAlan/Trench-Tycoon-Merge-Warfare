@@ -18,6 +18,10 @@ import { CombatView } from './components/CombatView';
 import { RosterView } from './components/RosterView';
 import { HubView } from './components/HubView';
 import { MapView } from './components/MapView';
+import { QuestView } from './components/QuestView';
+import { GuildView } from './components/GuildView';
+import { RankedView } from './components/RankedView';
+import { WarShopView } from './components/WarShopView';
 
 function GameContent() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -285,17 +289,10 @@ function GameContent() {
           <SummonView activeBanner={activeBanner} setActiveBanner={setActiveBanner} performSummon={performSummon} res={res} summonCost={summonCost} pity={pity} setCurrentTab={setCurrentTab} setUiState={setUiState} />
         )}
 
-        {currentTab === 'quests' && (
-          <div className="tab-content fade-in" style={{ padding: '20px' }}>
-             <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', marginBottom: '20px' }}>
-              <button className="confirm-btn" style={{ width: 'auto', background: '#334155' }} onClick={() => setCurrentTab('hub')}>
-                ⬅️ RETOUR
-              </button>
-            </div>
-            <h2 style={{ textAlign: 'center' }}>QUÊTES & SUCCÈS</h2>
-            <p style={{ textAlign: 'center', color: '#94a3b8' }}>En développement...</p>
-          </div>
-        )}
+        {currentTab === 'quests' && <QuestView setCurrentTab={setCurrentTab} />}
+        {currentTab === 'guild' && <GuildView res={res} setRes={setRes} setCurrentTab={setCurrentTab} />}
+        {currentTab === 'ranked' && <RankedView setCurrentTab={setCurrentTab} />}
+        {currentTab === 'warshop' && <WarShopView setCurrentTab={setCurrentTab} />}
 
         {currentTab === 'settings' && (
           <div className="tab-content hq-section fade-in" style={{ padding: '20px' }}>
