@@ -31,21 +31,34 @@ export const Battlefield = memo(({
         {weather === 'storm' && <div className="weather-overlay weather-storm"></div>}
         {weather === 'heat' && <div className="weather-overlay weather-heat"></div>}
 
-        <div className="battlefield-1d" style={{ height: '140px', overflow: 'hidden' }}>
-          <div className="physical-base base-player" style={{ transform: `scale(${1 + ((buildings?.hq ?? 0) * 0.05)})`, transformOrigin: 'bottom left', left: '-10px', fontSize: '90px' }}>⛺</div>
-          <div className="physical-base base-enemy" style={{ right: '-10px', fontSize: '90px' }}>🏯</div>
+        <div className="battlefield-1d">
+          <div className="physical-base-container base-player-container">
+            <div className="base-label">Base Alliée</div>
+            <div className="base-hp-bar">
+              <div className="base-hp-fill base-player-fill" style={{ width: `${Math.max(0, Math.min(100, (combatState?.playerHp / (500 + ((buildings?.hq ?? 0) * 500))) * 100))}%` }}></div>
+            </div>
+            <div className="physical-base base-player" style={{ transform: `scale(${1 + ((buildings?.hq ?? 0) * 0.05)})`, transformOrigin: 'bottom left', position: 'relative', fontSize: '90px' }}>⛺</div>
+          </div>
+
+          <div className="physical-base-container base-enemy-container">
+            <div className="base-label">Base Ennemie</div>
+            <div className="base-hp-bar">
+              <div className="base-hp-fill base-enemy-fill" style={{ width: `${Math.max(0, Math.min(100, (combatState?.enemyHp / combatState?.enemyMaxHp) * 100))}%` }}></div>
+            </div>
+            <div className="physical-base base-enemy" style={{ position: 'relative', fontSize: '90px' }}>🏯</div>
+          </div>
 
           {field?.troops?.map(t => (
-            <div key={t.id} className="field-entity entity-troop" style={{ left: `${t.x}%`, zIndex: Math.floor(t.x) }}>
-              <div className="unit-level-badge">Lv. {t.level}</div>
+            <div key={t.id} className={`field-entity entity-troop ${t.isAttacking ? 'shake-anim' : ''}`} style={{ left: `${t.x}%`, zIndex: Math.floor(t.x) }}>
+              <div className="entity-level">Nv.{t.level}</div>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(t.hp/t.maxHp)*100}%`}}></div></div>
               <span className="unit-emoji" style={{ fontSize: '35px', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))' }}>{UNIT_TYPES[t.level]?.emoji}</span>
             </div>
           ))}
           {field?.enemies?.map(e => (
-            <div key={e.id} className={`field-entity entity-enemy ${e.isBoss ? 'is-boss' : ''}`} style={{ left: `${e.x}%`, zIndex: Math.floor(100 - e.x) }}>
-              <div className="unit-level-badge">Lv. {e.level}</div>
-              <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(e.hp/e.maxHp)*100}%`, background: '#ef4444'}}></div></div>
+            <div key={e.id} className={`field-entity entity-enemy ${e.isBoss ? 'is-boss' : ''} ${e.isAttacking ? 'shake-anim' : ''}`} style={{ left: `${e.x}%`, zIndex: Math.floor(100 - e.x) }}>
+              <div className="entity-level">Nv.{e.level}</div>
+              <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(e.hp/e.maxHp)*100}%`}}></div></div>
               <span className="unit-emoji" style={{ fontSize: e.isBoss ? '60px' : '35px', transform: 'scaleX(-1)', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))' }}>{UNIT_TYPES[e.level]?.emoji}</span>
             </div>
           ))}
@@ -54,11 +67,11 @@ export const Battlefield = memo(({
           ))}
         </div>
 
-        <div className="bases-hud">
-          <div className="base-hp player">Base: {formatNum(combatState?.playerHp ?? 0)}</div>
-          {isRaidBossWave && <div className="raid-timer">00:{raidTimer < 10 ? `0${raidTimer}` : raidTimer}</div>}
-          <div className="base-hp enemy">Objectif: {formatNum(combatState?.enemyHp ?? 0)}</div>
-        </div>
+        {isRaidBossWave && (
+          <div className="bases-hud">
+            <div className="raid-timer">00:{raidTimer < 10 ? `0${raidTimer}` : raidTimer}</div>
+          </div>
+        )}
       </div>
     </>
   );

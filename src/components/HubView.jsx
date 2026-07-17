@@ -13,8 +13,17 @@ export const HubView = ({ setCurrentTab }) => {
         <button className="hub-btn" onClick={() => setCurrentTab('summon')}>
           <span className="hub-icon">✨</span> INVOCATION
         </button>
+        <button className="hub-btn" onClick={() => setCurrentTab('guild')}>
+          <span className="hub-icon">🛡️</span> GUILDE
+        </button>
+        <button className="hub-btn" onClick={() => setCurrentTab('ranked')}>
+          <span className="hub-icon">🏆</span> MODE CLASSÉ
+        </button>
         <button className="hub-btn" onClick={() => setCurrentTab('quests')}>
           <span className="hub-icon">📜</span> QUÊTES / SUCCÈS
+        </button>
+        <button className="hub-btn" onClick={() => setCurrentTab('warshop')}>
+          <span className="hub-icon">🛒</span> BOUTIQUE DE GUERRE
         </button>
         <button className="hub-btn" onClick={() => setCurrentTab('settings')}>
           <span className="hub-icon">⚙️</span> PARAMÈTRES

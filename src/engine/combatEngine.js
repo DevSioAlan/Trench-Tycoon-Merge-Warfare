@@ -51,11 +51,13 @@ export const processCombatTick = ({
     const now = Date.now();
 
     let target = newEnemies.find(e => Math.abs(e.x - t.x) <= range);
+    t.isAttacking = false;
 
     if (!target && t.x >= (100 - range)) {
       // Base attack
       if (now - (t.lastAttack || 0) >= atkCooldown) {
         t.lastAttack = now;
+        t.isAttacking = true;
         const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
         let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
         if (isCrit) tDmg *= 2;
@@ -71,6 +73,7 @@ export const processCombatTick = ({
     } else if (target) {
       if (now - (t.lastAttack || 0) >= atkCooldown) {
         t.lastAttack = now;
+        t.isAttacking = true;
         const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
         let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
         if (isCrit) tDmg *= 2;
@@ -85,7 +88,10 @@ export const processCombatTick = ({
         addFloatingText(tDmg, target.x, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
       }
     } else {
-      t.x += t.speed * speedMod;
+      let nearestEnemy = newEnemies.length > 0 ? newEnemies[newEnemies.length - 1] : null; // Already sorted
+      if (!nearestEnemy || Math.abs(nearestEnemy.x - t.x) > range) {
+        t.x += t.speed * speedMod;
+      }
     }
   });
 
@@ -98,20 +104,26 @@ export const processCombatTick = ({
     const now = Date.now();
 
     let target = newTroops.find(t => Math.abs(t.x - e.x) <= range);
+    e.isAttacking = false;
 
     if (!target && e.x <= range) {
       if (now - (e.lastAttack || 0) >= atkCooldown) {
          e.lastAttack = now;
+         e.isAttacking = true;
          pDamageTaken += e.dmg;
          // Don't sacrifice enemies on player base either
       }
     } else if (target) {
       if (now - (e.lastAttack || 0) >= atkCooldown) {
          e.lastAttack = now;
+         e.isAttacking = true;
          target.hp -= e.dmg;
       }
     } else {
-      e.x -= e.speed * speedMod;
+      let nearestTroop = newTroops.length > 0 ? newTroops[newTroops.length - 1] : null;
+      if (!nearestTroop || Math.abs(nearestTroop.x - e.x) > range) {
+        e.x -= e.speed * speedMod;
+      }
     }
   });
 
