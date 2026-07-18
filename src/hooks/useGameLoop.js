@@ -11,6 +11,7 @@ export const useGameLoop = ({
   const { buildings, lab, relics, waveEvent, wave, isRaidBossWave, field, rageTimer, settings, grid, combatState, prestigeUps, synergyBuffs } = state;
   const { stateRef } = state;
   const combatTimeRef = useRef(0);
+  const pendingStatsRef = useRef({ damageDealt: 0, unitsKilled: 0 });
 
   // AUTO SAVE
   useEffect(() => {
@@ -35,6 +36,19 @@ export const useGameLoop = ({
       });
 
       if (rageTimer > 0) setRageTimer(rt => Math.max(0, rt - 1));
+
+      // Apply accumulated combat stats
+      if (pendingStatsRef.current.damageDealt > 0 || pendingStatsRef.current.unitsKilled > 0) {
+        state.setProfile(p => ({
+          ...p,
+          stats: {
+            ...p.stats,
+            damageDealt: (p.stats?.damageDealt || 0) + pendingStatsRef.current.damageDealt,
+            unitsKilled: (p.stats?.unitsKilled || 0) + pendingStatsRef.current.unitsKilled,
+          }
+        }));
+        pendingStatsRef.current = { damageDealt: 0, unitsKilled: 0 };
+      }
 
 
       if (currentTab === 'combat') {
@@ -102,11 +116,17 @@ export const useGameLoop = ({
     if (!gameStarted || currentTab !== 'combat') return;
     const combatTick = setInterval(() => {
       setField(currentField => {
-        const { troops, enemies, newCombatState, reward } = processCombatTick({
+        const { troops, enemies, projectiles, newCombatState, reward, statsDiff } = processCombatTick({
           currentField, weather: state.weather, waveEvent, lab, relics, prestigeUps, synergyBuffs,
           combatState, rageTimer, settings, particleEngine, addFloatingText, playSfx, triggerShake, doCameraPunch,
           wave, isRaidBossWave, handleGameOver
         });
+
+        // Safely accumulate stats in ref without triggering state updates mid-render
+        if (statsDiff && (statsDiff.damageDealt > 0 || statsDiff.unitsKilled > 0)) {
+           pendingStatsRef.current.damageDealt += statsDiff.damageDealt;
+           pendingStatsRef.current.unitsKilled += statsDiff.unitsKilled;
+        }
 
         if (reward) {
           setTimeout(() => {
@@ -128,11 +148,11 @@ export const useGameLoop = ({
               return { ...c, playerHp: Math.min(maxPlayerHp, c.playerHp + 200), enemyMaxHp: newMax, enemyHp: newMax };
             });
           }, 500);
-        } else if (newCombatState !== combatState) {
-          setCombatState(newCombatState);
+        } else {
+          setCombatState(newCombatState); // Always set to force update HP bars
         }
 
-        return { troops, enemies };
+        return { troops, enemies, projectiles: projectiles || [] };
       });
     }, 200);
     return () => clearInterval(combatTick);

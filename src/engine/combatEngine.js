@@ -29,8 +29,11 @@ export const processCombatTick = ({
 }) => {
   let newTroops = currentField.troops.map(t => ({...t}));
   let newEnemies = currentField.enemies.map(e => ({...e}));
+  let projectiles = currentField.projectiles ? currentField.projectiles.map(p => ({...p})) : [];
   let pDamageTaken = 0;
   let eDamageTaken = 0;
+
+  let statsDiff = { damageDealt: 0, unitsKilled: 0 };
   let nextCombatState = { ...combatState };
 
   const speedMod = weather === 'snow' ? 0.6 : 1;
@@ -53,39 +56,55 @@ export const processCombatTick = ({
     let target = newEnemies.find(e => Math.abs(e.x - t.x) <= range);
     t.isAttacking = false;
 
+    const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
+    let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
+    if (isCrit) tDmg *= 2;
+
     if (!target && t.x >= (100 - range)) {
       // Base attack
       if (now - (t.lastAttack || 0) >= atkCooldown) {
         t.lastAttack = now;
         t.isAttacking = true;
-        const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
-        let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
-        if (isCrit) tDmg *= 2;
-        eDamageTaken += tDmg;
 
-        // Removed sacrifice at base to allow persistent attack
-        addFloatingText(tDmg, 95, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
-        if (isCrit) doCameraPunch();
-        if (settings.vfx && particleEngine.current) {
-           particleEngine.current.emit(window.innerWidth, window.innerHeight/2, unitDef.color, 'spark', isCrit ? 15 : 5);
+        if (range > 10) {
+          projectiles.push({
+            id: Date.now() + Math.random(),
+            x: t.x, targetX: 95, y: 50, targetY: 40,
+            speed: 5, damage: tDmg, isCrit, targetId: 'base', fromPlayer: true,
+            color: unitDef.color || '#fff'
+          });
+        } else {
+          eDamageTaken += tDmg;
+          statsDiff.damageDealt += tDmg;
+          addFloatingText(tDmg, 95, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
+          if (isCrit) doCameraPunch();
+          if (settings.vfx && particleEngine.current) {
+             particleEngine.current.emit(window.innerWidth, window.innerHeight/2, unitDef.color, 'spark', isCrit ? 15 : 5);
+          }
         }
       }
     } else if (target) {
       if (now - (t.lastAttack || 0) >= atkCooldown) {
         t.lastAttack = now;
         t.isAttacking = true;
-        const isCrit = Math.random() < (0.1 + (lab.crit * 0.05) + relics.critBonus);
-        let tDmg = Math.floor(t.dmg * prestigeUps.dmgMult * synergyBuffs.dmgMult * (1 + relics.dmgBonus) * eventDebuff * (rageTimer > 0 ? 2 : 1));
-        if (isCrit) tDmg *= 2;
 
-        target.hp -= tDmg;
-
-        if (settings.vfx && particleEngine.current) {
-           particleEngine.current.emit(window.innerWidth/2 + (t.x - 50)*2, window.innerHeight/2, unitDef.color, 'spark', isCrit ? 15 : 5);
+        if (range > 10) {
+          projectiles.push({
+            id: Date.now() + Math.random(),
+            x: t.x, targetX: target.x, y: 50, targetY: 50,
+            speed: 5, damage: tDmg, isCrit, targetId: target.id, fromPlayer: true,
+            color: unitDef.color || '#fff'
+          });
+        } else {
+          target.hp -= tDmg;
+          statsDiff.damageDealt += tDmg;
+          if (settings.vfx && particleEngine.current) {
+             particleEngine.current.emit(window.innerWidth/2 + (t.x - 50)*2, window.innerHeight/2, unitDef.color, 'spark', isCrit ? 15 : 5);
+          }
+          if (isCrit) doCameraPunch();
+          playSfx('hit');
+          addFloatingText(tDmg, target.x, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
         }
-        if (isCrit) doCameraPunch();
-        playSfx('hit');
-        addFloatingText(tDmg, target.x, 40, isCrit ? 'damage-crit' : 'damage-white', isCrit ? 1.2 : 0.8);
       }
     } else {
       let nearestEnemy = newEnemies.length > 0 ? newEnemies[newEnemies.length - 1] : null; // Already sorted
@@ -110,14 +129,33 @@ export const processCombatTick = ({
       if (now - (e.lastAttack || 0) >= atkCooldown) {
          e.lastAttack = now;
          e.isAttacking = true;
-         pDamageTaken += e.dmg;
-         // Don't sacrifice enemies on player base either
+
+         if (range > 10) {
+           projectiles.push({
+             id: Date.now() + Math.random(),
+             x: e.x, targetX: 5, y: 50, targetY: 40,
+             speed: -5, damage: e.dmg, isCrit: false, targetId: 'base', fromPlayer: false,
+             color: unitDef.color || '#fff'
+           });
+         } else {
+           pDamageTaken += e.dmg;
+         }
       }
     } else if (target) {
       if (now - (e.lastAttack || 0) >= atkCooldown) {
          e.lastAttack = now;
          e.isAttacking = true;
-         target.hp -= e.dmg;
+
+         if (range > 10) {
+           projectiles.push({
+             id: Date.now() + Math.random(),
+             x: e.x, targetX: target.x, y: 50, targetY: 50,
+             speed: -5, damage: e.dmg, isCrit: false, targetId: target.id, fromPlayer: false,
+             color: unitDef.color || '#fff'
+           });
+         } else {
+           target.hp -= e.dmg;
+         }
       }
     } else {
       let nearestTroop = newTroops.length > 0 ? newTroops[newTroops.length - 1] : null;
@@ -127,6 +165,66 @@ export const processCombatTick = ({
     }
   });
 
+
+  // Process projectiles
+  let remainingProjectiles = [];
+  projectiles.forEach(p => {
+    p.x += p.speed;
+
+    // Check hit
+    let hit = false;
+    if (p.fromPlayer) {
+      if (p.targetId === 'base' && p.x >= p.targetX) hit = true;
+      else {
+        let t = newEnemies.find(e => e.id === p.targetId);
+        if (t) {
+          if (p.x >= t.x) { hit = true; t.hp -= p.damage; statsDiff.damageDealt += p.damage; p.targetX = t.x; }
+        } else {
+          // Target died, check if it hits anything else on the way or remove
+          let nearest = newEnemies.find(e => Math.abs(e.x - p.x) <= 2);
+          if (nearest) { hit = true; nearest.hp -= p.damage; statsDiff.damageDealt += p.damage; p.targetX = nearest.x; }
+          else if (p.x >= 95) { hit = true; eDamageTaken += p.damage; statsDiff.damageDealt += p.damage; p.targetX = 95; }
+        }
+      }
+
+      if (hit) {
+        if (p.targetId === 'base' || p.x >= 95) eDamageTaken += p.damage;
+
+        addFloatingText(p.damage, p.targetX, p.targetY, p.isCrit ? 'damage-crit' : 'damage-white', p.isCrit ? 1.2 : 0.8);
+        if (p.isCrit) doCameraPunch();
+        playSfx('hit');
+        addFloatingText('💥', p.targetX, p.targetY, 'damage-white', 1.5);
+        if (settings.vfx && particleEngine.current) {
+           particleEngine.current.emit(window.innerWidth/2 + (p.targetX - 50)*2, window.innerHeight/2, p.color, 'spark', p.isCrit ? 15 : 5);
+        }
+      }
+    } else {
+      if (p.targetId === 'base' && p.x <= p.targetX) hit = true;
+      else {
+        let t = newTroops.find(tr => tr.id === p.targetId);
+        if (t) {
+          if (p.x <= t.x) { hit = true; t.hp -= p.damage; p.targetX = t.x; }
+        } else {
+          let nearest = newTroops.find(tr => Math.abs(tr.x - p.x) <= 2);
+          if (nearest) { hit = true; nearest.hp -= p.damage; p.targetX = nearest.x; }
+          else if (p.x <= 5) { hit = true; pDamageTaken += p.damage; p.targetX = 5; }
+        }
+      }
+
+      if (hit) {
+        if (p.targetId === 'base' || p.x <= 5) pDamageTaken += p.damage;
+        addFloatingText('💥', p.targetX, p.targetY, 'damage-white', 1.5);
+        playSfx('hit');
+      }
+    }
+
+    if (!hit) {
+      remainingProjectiles.push(p);
+    }
+  });
+
+  const killedEnemies = newEnemies.filter(e => e.hp <= 0).length;
+  statsDiff.unitsKilled += killedEnemies;
 
   newTroops = newTroops.filter(t => t.hp > 0);
   newEnemies = newEnemies.filter(e => e.hp > 0);
@@ -155,5 +253,5 @@ export const processCombatTick = ({
     triggerShake('base-shake');
   }
 
-  return { troops: newTroops, enemies: newEnemies, newCombatState: nextCombatState, reward: resultReward };
+  return { troops: newTroops, enemies: newEnemies, projectiles: remainingProjectiles, newCombatState: nextCombatState, reward: resultReward, statsDiff };
 };

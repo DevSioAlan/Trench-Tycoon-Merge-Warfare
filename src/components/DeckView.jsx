@@ -1,9 +1,17 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { UNIT_TYPES } from '../constants';
 
 export const DeckView = memo(({ combatDeck, cooldowns, now, handleDeployIndividual, combatState, setCurrentTab, isStandalone, handleUpgradeEnergy }) => {
   // If isStandalone, it means we are in the HUB menu looking at our deck
   // Otherwise, we are in combat.
+  const [localNow, setLocalNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (isStandalone) return;
+    const interval = setInterval(() => setLocalNow(Date.now()), 100);
+    return () => clearInterval(interval);
+  }, [isStandalone]);
+
 
   if (isStandalone) {
     return (
@@ -74,8 +82,8 @@ export const DeckView = memo(({ combatDeck, cooldowns, now, handleDeployIndividu
 
         const energyCost = UNIT_TYPES[unit.level]?.cost || (unit.level * 10);
         const cooldownTime = cooldowns && cooldowns[idx] ? cooldowns[idx] : 0;
-        const isOnCooldown = cooldownTime > now;
-        const cdRemaining = isOnCooldown ? Math.ceil((cooldownTime - now) / 1000) : 0;
+        const isOnCooldown = cooldownTime > localNow;
+        const cdRemaining = isOnCooldown ? Math.ceil((cooldownTime - localNow) / 1000) : 0;
         const canAfford = combatState.energy >= energyCost;
         const isReady = !isOnCooldown && canAfford;
 

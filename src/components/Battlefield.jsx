@@ -64,6 +64,22 @@ export const Battlefield = memo(({
               <span className="unit-emoji" style={{ fontSize: e.isBoss ? '60px' : '35px', transform: 'scaleX(-1)', filter: 'drop-shadow(0 4px 4px rgba(0,0,0,0.5))', zIndex: 2 }}>{UNIT_TYPES[e.level]?.emoji}</span>
             </div>
           ))}
+
+          {field?.projectiles?.map(p => (
+            <div key={p.id} className="field-projectile" style={{
+              position: 'absolute',
+              left: `${p.x}%`,
+              bottom: '40px',
+              width: '10px',
+              height: '4px',
+              background: p.color || '#fff',
+              boxShadow: `0 0 10px ${p.color || '#fff'}`,
+              borderRadius: '2px',
+              zIndex: 50,
+              transition: 'left 0.2s linear'
+            }}></div>
+          ))}
+
           {floatingTexts?.map(ft => (
             <div key={ft.id} className={`floating-damage damage-${ft.type}`} style={{ left: `${ft.x}%`, top: `${ft.y}px`, transform: `scale(${ft.sizeMult}) translate(-50%, -50%)`, zIndex: 100 }}>{ft.text}</div>
           ))}
