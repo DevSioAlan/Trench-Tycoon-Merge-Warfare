@@ -12,7 +12,7 @@ export const SummonView = ({ activeBanner, setActiveBanner, performSummon, res, 
   };
 
   return (
-    <div className={`action-row fade-in ${isAnimating ? 'shake-anim' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '15px', height: '100%', overflowY: 'auto' }}>
+    <div className={`action-row fade-in ${isAnimating ? 'shake-anim' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '15px', height: '100%', overflowY: 'auto', justifyContent: 'center', alignItems: 'center', width: '100%', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', marginBottom: '10px' }}>
         <button className="confirm-btn" style={{ width: 'auto', background: '#334155' }} onClick={() => setCurrentTab('hub')}>
           ⬅️ RETOUR

@@ -31,7 +31,7 @@ export const useGameLoop = ({
 
       setCombatState(c => {
          const gen = c.energyGen || 5;
-         const max = c.maxEnergy || 100;
+         const max = c.maxEnergy || 1000;
          return { ...c, energy: Math.min(max, c.energy + gen), combo: Math.max(0, c.combo - 1) };
       });
 
@@ -149,7 +149,7 @@ export const useGameLoop = ({
             });
           }, 500);
         } else {
-          setCombatState(newCombatState); // Always set to force update HP bars
+          setCombatState({ ...newCombatState }); // Always set to force update HP bars
         }
 
         return { troops, enemies, projectiles: projectiles || [] };

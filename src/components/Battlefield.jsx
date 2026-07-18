@@ -32,7 +32,7 @@ export const Battlefield = memo(({
         {weather === 'heat' && <div className="weather-overlay weather-heat"></div>}
 
         <div className="battlefield-1d">
-          <div className="physical-base-container base-player-container">
+          <div className={`physical-base-container base-player-container ${combatState?.playerHit ? 'shake-anim' : ''}`}>
             <div className="base-label">Base Alliée</div>
             <div className="base-hp-bar">
               <div className="base-hp-fill base-player-fill" style={{ width: `${Math.max(0, Math.min(100, (combatState?.playerHp / (500 + ((buildings?.hq ?? 0) * 500))) * 100))}%` }}></div>
@@ -40,7 +40,7 @@ export const Battlefield = memo(({
             <div className="physical-base base-player" style={{ transform: `scale(${1 + ((buildings?.hq ?? 0) * 0.05)})`, transformOrigin: 'bottom left', position: 'relative', fontSize: '90px' }}>⛺</div>
           </div>
 
-          <div className="physical-base-container base-enemy-container">
+          <div className={`physical-base-container base-enemy-container ${combatState?.enemyHit ? 'shake-anim' : ''}`}>
             <div className="base-label">Base Ennemie</div>
             <div className="base-hp-bar">
               <div className="base-hp-fill base-enemy-fill" style={{ width: `${Math.max(0, Math.min(100, (combatState?.enemyHp / combatState?.enemyMaxHp) * 100))}%` }}></div>
@@ -49,7 +49,7 @@ export const Battlefield = memo(({
           </div>
 
           {field?.troops?.map(t => (
-            <div key={t.id} className={`field-entity entity-troop ${t.isAttacking ? 'shake-anim' : ''}`} style={{ left: `${t.x}%`, zIndex: Math.floor(t.x) }}>
+            <div key={t.id} className={`field-entity entity-troop ${(t.isAttacking || t.isHit) ? 'shake-anim' : ''}`} style={{ left: `${t.x}%`, zIndex: Math.floor(t.x) }}>
               <div className={`battlefield-aura aura-${t.level}`}></div>
               <div className="entity-level">Nv.{t.level}</div>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(t.hp/t.maxHp)*100}%`}}></div></div>
@@ -57,7 +57,7 @@ export const Battlefield = memo(({
             </div>
           ))}
           {field?.enemies?.map(e => (
-            <div key={e.id} className={`field-entity entity-enemy ${e.isBoss ? 'is-boss' : ''} ${e.isAttacking ? 'shake-anim' : ''}`} style={{ left: `${e.x}%`, zIndex: Math.floor(100 - e.x) }}>
+            <div key={e.id} className={`field-entity entity-enemy ${e.isBoss ? 'is-boss' : ''} ${(e.isAttacking || e.isHit) ? 'shake-anim' : ''}`} style={{ left: `${e.x}%`, zIndex: Math.floor(100 - e.x) }}>
               <div className={`battlefield-aura aura-${e.level}`}></div>
               <div className="entity-level">Nv.{e.level}</div>
               <div className="entity-hp"><div className="entity-hp-fill" style={{width: `${(e.hp/e.maxHp)*100}%`}}></div></div>
@@ -70,14 +70,10 @@ export const Battlefield = memo(({
               position: 'absolute',
               left: `${p.x}%`,
               bottom: '40px',
-              width: '10px',
-              height: '4px',
-              background: p.color || '#fff',
-              boxShadow: `0 0 10px ${p.color || '#fff'}`,
-              borderRadius: '2px',
+              fontSize: '20px',
               zIndex: 50,
               transition: 'left 0.2s linear'
-            }}></div>
+            }}>{p.emoji || '☄️'}</div>
           ))}
 
           {floatingTexts?.map(ft => (
