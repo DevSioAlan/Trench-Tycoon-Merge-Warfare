@@ -35,6 +35,8 @@ export const processCombatTick = ({
 
   let statsDiff = { damageDealt: 0, unitsKilled: 0 };
   let nextCombatState = { ...combatState };
+  nextCombatState.playerHit = false;
+  nextCombatState.enemyHit = false;
 
   const speedMod = weather === 'snow' ? 0.6 : 1;
   const heatDmg = weather === 'heat' ? 5 : 0;
@@ -46,6 +48,7 @@ export const processCombatTick = ({
 
 
   newTroops.forEach(t => {
+    t.isHit = false;
     if (heatDmg) { t.hp -= heatDmg; addFloatingText(heatDmg, t.x, 60, 'damage-red', 0.5); }
 
     const unitDef = UNIT_TYPES[t.level] || {};
@@ -71,7 +74,8 @@ export const processCombatTick = ({
             id: Date.now() + Math.random(),
             x: t.x, targetX: 95, y: 50, targetY: 40,
             speed: 5, damage: tDmg, isCrit, targetId: 'base', fromPlayer: true,
-            color: unitDef.color || '#fff'
+            color: unitDef.color || '#fff',
+            emoji: unitDef.emoji || '☄️'
           });
         } else {
           eDamageTaken += tDmg;
@@ -93,10 +97,12 @@ export const processCombatTick = ({
             id: Date.now() + Math.random(),
             x: t.x, targetX: target.x, y: 50, targetY: 50,
             speed: 5, damage: tDmg, isCrit, targetId: target.id, fromPlayer: true,
-            color: unitDef.color || '#fff'
+            color: unitDef.color || '#fff',
+            emoji: unitDef.emoji || '☄️'
           });
         } else {
           target.hp -= tDmg;
+          target.isHit = true;
           statsDiff.damageDealt += tDmg;
           if (settings.vfx && particleEngine.current) {
              particleEngine.current.emit(window.innerWidth/2 + (t.x - 50)*2, window.innerHeight/2, unitDef.color, 'spark', isCrit ? 15 : 5);
@@ -115,6 +121,7 @@ export const processCombatTick = ({
   });
 
   newEnemies.forEach(e => {
+    e.isHit = false;
     if (heatDmg) e.hp -= heatDmg;
 
     const unitDef = UNIT_TYPES[e.level] || {};
@@ -135,7 +142,8 @@ export const processCombatTick = ({
              id: Date.now() + Math.random(),
              x: e.x, targetX: 5, y: 50, targetY: 40,
              speed: -5, damage: e.dmg, isCrit: false, targetId: 'base', fromPlayer: false,
-             color: unitDef.color || '#fff'
+             color: unitDef.color || '#fff',
+             emoji: unitDef.emoji || '☄️'
            });
          } else {
            pDamageTaken += e.dmg;
@@ -151,10 +159,12 @@ export const processCombatTick = ({
              id: Date.now() + Math.random(),
              x: e.x, targetX: target.x, y: 50, targetY: 50,
              speed: -5, damage: e.dmg, isCrit: false, targetId: target.id, fromPlayer: false,
-             color: unitDef.color || '#fff'
+             color: unitDef.color || '#fff',
+             emoji: unitDef.emoji || '☄️'
            });
          } else {
            target.hp -= e.dmg;
+           target.isHit = true;
          }
       }
     } else {
@@ -178,11 +188,11 @@ export const processCombatTick = ({
       else {
         let t = newEnemies.find(e => e.id === p.targetId);
         if (t) {
-          if (p.x >= t.x) { hit = true; t.hp -= p.damage; statsDiff.damageDealt += p.damage; p.targetX = t.x; }
+          if (p.x >= t.x) { hit = true; t.hp -= p.damage; t.isHit = true; statsDiff.damageDealt += p.damage; p.targetX = t.x; }
         } else {
           // Target died, check if it hits anything else on the way or remove
           let nearest = newEnemies.find(e => Math.abs(e.x - p.x) <= 2);
-          if (nearest) { hit = true; nearest.hp -= p.damage; statsDiff.damageDealt += p.damage; p.targetX = nearest.x; }
+          if (nearest) { hit = true; nearest.hp -= p.damage; nearest.isHit = true; statsDiff.damageDealt += p.damage; p.targetX = nearest.x; }
           else if (p.x >= 95) { hit = true; eDamageTaken += p.damage; statsDiff.damageDealt += p.damage; p.targetX = 95; }
         }
       }
@@ -203,10 +213,10 @@ export const processCombatTick = ({
       else {
         let t = newTroops.find(tr => tr.id === p.targetId);
         if (t) {
-          if (p.x <= t.x) { hit = true; t.hp -= p.damage; p.targetX = t.x; }
+          if (p.x <= t.x) { hit = true; t.hp -= p.damage; t.isHit = true; p.targetX = t.x; }
         } else {
           let nearest = newTroops.find(tr => Math.abs(tr.x - p.x) <= 2);
-          if (nearest) { hit = true; nearest.hp -= p.damage; p.targetX = nearest.x; }
+          if (nearest) { hit = true; nearest.hp -= p.damage; nearest.isHit = true; p.targetX = nearest.x; }
           else if (p.x <= 5) { hit = true; pDamageTaken += p.damage; p.targetX = 5; }
         }
       }
@@ -233,6 +243,7 @@ export const processCombatTick = ({
     const newHp = Math.max(0, nextCombatState.playerHp - pDamageTaken);
     if (newHp === 0) setTimeout(handleGameOver, 100);
     nextCombatState.playerHp = newHp;
+    nextCombatState.playerHit = true;
     addFloatingText(pDamageTaken, 10, 50, 'damage-red', 1.5);
     triggerShake('player-shake');
   }
@@ -249,6 +260,7 @@ export const processCombatTick = ({
       };
     }
     nextCombatState.enemyHp = newHp;
+    nextCombatState.enemyHit = true;
     addFloatingText(eDamageTaken, 90, 50, 'damage-gold', 1.5);
     triggerShake('base-shake');
   }

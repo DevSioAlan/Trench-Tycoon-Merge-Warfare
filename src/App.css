@@ -15,7 +15,7 @@ body { margin: 0; background-color: var(--bg-dark); font-family: system-ui, sans
 /* OVERLAY PAYSAGE */
 .landscape-overlay { display: none; }
 @media (orientation: portrait) {
-  .game-wrapper { display: none !important; }
+  #root > .game-wrapper { display: none !important; }
   .landscape-overlay {
     display: flex; position: fixed; inset: 0; z-index: 99999;
     background: #0f172a; color: white; align-items: center; justify-content: center;
@@ -175,12 +175,12 @@ body { margin: 0; background-color: var(--bg-dark); font-family: system-ui, sans
 .loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 20px; font-weight: bold; color: var(--accent); }
 
 /* Météo */
-.weather-rain::after { content: ''; position: absolute; inset: 0; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="20"><line x1="5" y1="0" x2="5" y2="10" stroke="rgba(255,255,255,0.2)" stroke-width="1"/></svg>') repeat; animation: rainDrop 0.2s linear infinite; pointer-events: none; z-index: 90; opacity: 0.4; }
+.weather-rain::after { content: ''; position: absolute; inset: 0; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="20"><line x1="5" y1="0" x2="5" y2="10" stroke="rgba(255,255,255,0.2)" stroke-width="1"/></svg>') repeat; animation: rainDrop 0.2s linear infinite; pointer-events: none; z-index: 10; opacity: 0.4; }
 @keyframes rainDrop { 0% { background-position: 0 0; } 100% { background-position: -10px 100vh; } }
-.weather-snow::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(255,255,255,0.6) 2px, transparent 2px) repeat; background-size: 30px 30px; animation: snowFall 4s linear infinite; pointer-events: none; z-index: 90; opacity: 0.5; }
+.weather-snow::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(255,255,255,0.6) 2px, transparent 2px) repeat; background-size: 30px 30px; animation: snowFall 4s linear infinite; pointer-events: none; z-index: 10; opacity: 0.5; }
 @keyframes snowFall { 0% { background-position: 0 0; } 100% { background-position: 30px 100vh; } }
-.weather-heat::after { content: ''; position: absolute; inset: 0; background: rgba(239, 68, 68, 0.1); pointer-events: none; z-index: 90; animation: pulse 2s infinite alternate; opacity: 0.3; }
-.weather-storm::before { content: ''; position: absolute; inset: 0; background: white; opacity: 0; z-index: 95; pointer-events: none; animation: lightning 5s infinite; mix-blend-mode: overlay;}
+.weather-heat::after { content: ''; position: absolute; inset: 0; background: rgba(239, 68, 68, 0.1); pointer-events: none; z-index: 10; animation: pulse 2s infinite alternate; opacity: 0.3; }
+.weather-storm::before { content: ''; position: absolute; inset: 0; background: white; opacity: 0; z-index: 10; pointer-events: none; animation: lightning 5s infinite; mix-blend-mode: overlay;}
 @keyframes lightning { 0%, 95%, 100% { opacity: 0; } 96%, 98% { opacity: 0.3; } 97% { opacity: 0; } }
 
 .critical-hp-vignette { box-shadow: inset 0 0 120px rgba(239, 68, 68, 0.9); animation: pulse 0.8s infinite alternate; }
@@ -262,7 +262,7 @@ body { margin: 0; background-color: var(--bg-dark); font-family: system-ui, sans
 .shake-overlay { position: absolute; inset: 0; z-index: 800; pointer-events: none; }
 
 /* WEATHER EFFECTS */
-.weather-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 800; }
+.weather-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
 .weather-storm { background: rgba(0,0,0,0.3); animation: lightningFlash 5s infinite; }
 @keyframes lightningFlash {
   0%, 95%, 98%, 100% { background: rgba(0,0,0,0.3); }

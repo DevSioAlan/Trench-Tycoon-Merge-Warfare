@@ -4,7 +4,7 @@ import { UNIT_TYPES } from '../constants';
 export const RosterView = ({ inventory = [], combatDeck = [], setCombatDeck, setCurrentTab }) => {
   const handleEquip = (unit) => {
     // Strict restriction: One unit = 1 slot maximum (check by id)
-    if (combatDeck.some(u => u && u.id === unit.id)) {
+    if (combatDeck.some(u => u && u.level === unit.level)) {
       return; // Already equipped
     }
 
@@ -20,7 +20,7 @@ export const RosterView = ({ inventory = [], combatDeck = [], setCombatDeck, set
     // Sort inventory by level descending
     // Filter to get only unique units by ID
     const uniqueUnits = [];
-    const seenIds = new Set();
+    const seenLevels = new Set();
 
     // Sort inventory by level (rarity) descending, then by id (just for consistent sorting)
     const sortedInventory = [...inventory].sort((a, b) => {
@@ -29,9 +29,9 @@ export const RosterView = ({ inventory = [], combatDeck = [], setCombatDeck, set
     });
 
     for (const unit of sortedInventory) {
-      if (!seenIds.has(unit.id)) {
+      if (!seenLevels.has(unit.level)) {
         uniqueUnits.push(unit);
-        seenIds.add(unit.id);
+        seenLevels.add(unit.level);
       }
       if (uniqueUnits.length >= 6) break;
     }
